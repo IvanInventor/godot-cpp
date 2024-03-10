@@ -36,9 +36,6 @@ set(OPTIMIZE "AUTO" CACHE STRING "The desired optimization flags (NONE, CUSTOM, 
 
 set(SYMBOLS_VISIBILITY "AUTO" CACHE STRING "Symbols visibility on GNU platforms (AUTO, VISIBLE, HIDDEN)")
 
-#TODO: custom .gdextension template file to add shared library as dependency
-set(GODOT_CPP_LIBRARY_TYPE "STATIC" CACHE STRING "[Experimental] Library type (STATIC, SHARED)")
-
 
 option(DEV_BUILD "Developer build with dev-only debugging code" OFF)
 
