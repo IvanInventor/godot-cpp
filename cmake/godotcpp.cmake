@@ -285,7 +285,10 @@ else()
 	message(FATAL_ERROR "Platform not supported: ${PLATFORM}")
 endif()
 
-string(APPEND LIBRARY_SUFFIX ".${ARCH}")
+# Mac/IOS use framework directory structure and don't need arch suffix
+if((NOT "${PLATFORM}" STREQUAL "MACOS") AND (NOT "${PLATFORM}" STREQUAL "IOS"))
+	string(APPEND LIBRARY_SUFFIX ".${ARCH}")
+endif()
 
 if(${IOS_SIMULATOR})
 	string(APPEND LIBRARY_SUFFIX ".simulator")

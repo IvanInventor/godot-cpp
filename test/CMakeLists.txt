@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.6)
 project(gdexample LANGUAGES CXX)
 
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo;MinSizeRel")
-set(GODOT_CPP_PATH ../)	# path to godot-cpp repository
+set(GODOT_CPP_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../)	# path to godot-cpp repository
 
 add_subdirectory(
 	${GODOT_CPP_PATH}
@@ -14,6 +14,8 @@ add_subdirectory(
 file(GLOB_RECURSE SOURCES src/*.c**)
 file(GLOB_RECURSE HEADERS src/*.h**)
 
+get_directory_property(LIBRARY_SUFFIX DIRECTORY ${GODOT_CPP_PATH} DEFINITION LIBRARY_SUFFIX)
+
 # Define our godot-cpp library
 if(${PLATFORM} STREQUAL "WEB")
 	# wasm libraries loaded with dlopen() are created like this in cmake
@@ -21,6 +23,7 @@ if(${PLATFORM} STREQUAL "WEB")
 	set_target_properties(${PROJECT_NAME}
 		PROPERTIES
 			SUFFIX ".wasm"
+			OUTPUT_NAME "${PROJECT_NAME}${LIBRARY_SUFFIX}"
 	)
 elseif(${PLATFORM} STREQUAL "MACOS")
 	# TODO: create framework with cmake FRAMEWORK property
@@ -31,10 +34,14 @@ elseif(${PLATFORM} STREQUAL "MACOS")
 	set_target_properties(${PROJECT_NAME} PROPERTIES
 		FRAMEWORK TRUE
 		MACOSX_FRAMEWORK_IDENTIFIER com.godotengine.${PROJECT_NAME}
-		MACOSX_FRAMEWORK_INFO_PLIST Info.plist
+		MACOSX_FRAMEWORK_INFO_PLIST ${GODOT_CPP_PATH}/cmake/Info.plist.in
+		OUTPUT_NAME "lib${PROJECT_NAME}${LIBRARY_SUFFIX}"
 	)
 else()
 	add_library(${PROJECT_NAME} SHARED ${SOURCES} ${HEADERS})
+	set_target_properties(${PROJECT_NAME} PROPERTIES
+		OUTPUT_NAME "${PROJECT_NAME}${LIBRARY_SUFFIX}"
+)
 endif()
 
 target_link_libraries(${PROJECT_NAME} PUBLIC godot-cpp)
@@ -64,8 +71,6 @@ set_target_properties(${PROJECT_NAME}
 		RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/project/bin"
 		RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_CURRENT_SOURCE_DIR}/project/bin"
 		RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_CURRENT_SOURCE_DIR}/project/bin"
-
-		OUTPUT_NAME "${PROJECT_NAME}${LIBRARY_SUFFIX}"
 )
 if(${GODOT_CPP_WARNING_AS_ERROR})
 	set_warning_as_error(${PROJECT_NAME})
