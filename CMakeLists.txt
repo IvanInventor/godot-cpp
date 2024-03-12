@@ -10,7 +10,7 @@
 #
 # TARGET				Godot build target (EDITOR, TEMPLATE_DEBUG, TEMPLATE_RELEASE)
 #
-# PLATFORM:	Platform type (LINUX, MACOS, WINDOWS, ANDROID, IOS, WEB)
+# GODOT_PLATFORM:	Platform type (LINUX, MACOS, WINDOWS, ANDROID, IOS, WEB)
 # Auto-detected by default depending on current OS or chosen toolchain
 #
 # other global and chosen platform-specific options:

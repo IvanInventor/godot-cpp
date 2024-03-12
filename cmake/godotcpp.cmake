@@ -12,20 +12,28 @@ endif()
 set(TARGET "TEMPLATE_DEBUG" CACHE STRING "Target platform (EDITOR, TEMPLATE_DEBUG, TEMPLATE_RELEASE)")
 # Auto-detect platform
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-	set(DEFAULT_PLATFORM "LINUX")
+	set(DEFAULT_GODOT_PLATFORM "LINUX")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-	set(DEFAULT_PLATFORM "WINDOWS")
+	set(DEFAULT_GODOT_PLATFORM "WINDOWS")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-	set(DEFAULT_PLATFORM "MACOS")
+	set(DEFAULT_GODOT_PLATFORM "MACOS")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+	set(DEFAULT_GODOT_PLATFORM "IOS")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Emscripten") # Set by providing Emscripten toolchain
-	set(DEFAULT_PLATFORM "WEB")
+	set(DEFAULT_GODOT_PLATFORM "WEB")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Android") # Set by providing Android toolchain
-	set(DEFAULT_PLATFORM "ANDROID")
-else()
-	message(FATAL_ERROR "Could not auto-detect platform for \"${CMAKE_SYSTEM_NAME}\" automatically, please specify with -DPLATFORM=<platform>")
+       set(DEFAULT_GODOT_PLATFORM "NOTFOUND")
 endif()
-set(PLATFORM "${DEFAULT_PLATFORM}" CACHE STRING "[Auto-detected] Target platform (LINUX, MACOS, WINDOWS, ANDROID, IOS, WEB)")
 
+set(GODOT_PLATFORM "${DEFAULT_GODOT_PLATFORM}" CACHE STRING "[Auto-detected] Target platform (LINUX, MACOS, WINDOWS, ANDROID, IOS, WEB)")
+
+if("${GODOT_PLATFORM}" STREQUAL "NOTFOUND")
+       message(FATAL_ERROR "Could not auto-detect platform for \"${CMAKE_SYSTEM_NAME}\" automatically, please specify with -DGODOT_PLATFORM=<platform>")
+endif()
+
+set(GODOT_PLATFORM "${DEFAULT_GODOT_PLATFORM}" CACHE STRING "[Auto-detected] Target platform (LINUX, MACOS, WINDOWS, ANDROID, IOS, WEB)")
+
+message(STATUS "Platform detected: ${GODOT_PLATFORM}")
 set(GDEXTENSION_DIR "${CMAKE_CURRENT_SOURCE_DIR}/gdextension" CACHE FILEPATH "Path to a directory containing GDExtension interface header")
 
 set(GDEXTENSION_API_FILE "${CMAKE_CURRENT_SOURCE_DIR}/gdextension/extension_api.json" CACHE FILEPATH "Path to GDExtension API JSON file")
@@ -81,7 +89,7 @@ endif()
 # Workaround of $<CONFIG> expanding to "" when default build set
 set(CONFIG "$<IF:$<STREQUAL:,$<CONFIG>>,${CMAKE_BUILD_TYPE},$<CONFIG>>")
 
-string(TOLOWER ".${PLATFORM}.${TARGET}" platform_target)
+string(TOLOWER ".${GODOT_PLATFORM}.${TARGET}" platform_target)
 string(PREPEND LIBRARY_SUFFIX ${platform_target})
 
 # Default optimization levels if OPTIMIZE=AUTO, for multi-config support
@@ -266,24 +274,24 @@ list(APPEND GODOT_LINK_FLAGS
 )
 
 # Platform-specific options
-if("${PLATFORM}" STREQUAL "LINUX")
+if("${GODOT_PLATFORM}" STREQUAL "LINUX")
 	include(linux)
-elseif("${PLATFORM}" STREQUAL "MACOS")
+elseif("${GODOT_PLATFORM}" STREQUAL "MACOS")
 	include(macos)
-elseif("${PLATFORM}" STREQUAL "WINDOWS")
+elseif("${GODOT_PLATFORM}" STREQUAL "WINDOWS")
 	include(windows)
-elseif("${PLATFORM}" STREQUAL "ANDROID")
+elseif("${GODOT_PLATFORM}" STREQUAL "ANDROID")
 	include(android)
-elseif("${PLATFORM}" STREQUAL "IOS")
+elseif("${GODOT_PLATFORM}" STREQUAL "IOS")
 	include(ios)
-elseif("${PLATFORM}" STREQUAL "WEB")
+elseif("${GODOT_PLATFORM}" STREQUAL "WEB")
 	include(web)
 else()
-	message(FATAL_ERROR "Platform not supported: ${PLATFORM}")
+	message(FATAL_ERROR "Platform not supported: ${GODOT_PLATFORM}")
 endif()
 
 # Mac/IOS use framework directory structure and don't need arch suffix
-if((NOT "${PLATFORM}" STREQUAL "MACOS") AND (NOT "${PLATFORM}" STREQUAL "IOS"))
+if((NOT "${GODOT_PLATFORM}" STREQUAL "MACOS") AND (NOT "${GODOT_PLATFORM}" STREQUAL "IOS"))
 	string(APPEND LIBRARY_SUFFIX ".${ARCH}")
 endif()
 

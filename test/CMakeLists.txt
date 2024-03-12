@@ -17,7 +17,7 @@ file(GLOB_RECURSE HEADERS src/*.h**)
 get_directory_property(LIBRARY_SUFFIX DIRECTORY ${GODOT_CPP_PATH} DEFINITION LIBRARY_SUFFIX)
 
 # Define our godot-cpp library
-if(${PLATFORM} STREQUAL "WEB")
+if(${GODOT_PLATFORM} STREQUAL "WEB")
 	# wasm libraries loaded with dlopen() are created like this in cmake
 	add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 	set_target_properties(${PROJECT_NAME}
@@ -25,7 +25,7 @@ if(${PLATFORM} STREQUAL "WEB")
 			SUFFIX ".wasm"
 			OUTPUT_NAME "${PROJECT_NAME}${LIBRARY_SUFFIX}"
 	)
-elseif(${PLATFORM} STREQUAL "MACOS")
+elseif(${GODOT_PLATFORM} STREQUAL "MACOS")
 	# TODO: create framework with cmake FRAMEWORK property
 	# or with template file
 	message(WARNING "Mac/IOS framework configuration is not tested and may not work.")
