@@ -182,6 +182,7 @@ jobs:
           submodules: recursive
 
       - name: Setup Godot build cache
+        if: ${{ matrix.builder.name == 'SCons' }}
         uses: ./.github/actions/godot-cache
         with:
           cache-name: ${{ matrix.platforms.cache-name }}
@@ -225,12 +226,6 @@ jobs:
       - name: Install Ninja
         if: ${{ matrix.builder.name == 'CMake' }}
         uses: ashutoshvarma/setup-ninja@master
-
-      - name: '[TEMP] (CMake Mac) remove preexisting files'
-        if: ${{ matrix.builder.name == 'CMake' && (matrix.platforms.platform == 'macos' || matrix.platforms.platform == 'ios') }}
-        uses: JesseTG/rm@v1.0.3
-        with:
-          path: test/project/bin
 
       - name: Generate godot-cpp sources only
         run: ${{ format(matrix.builder.generate_sources, matrix.platforms.flags[matrix.builder.name]) }}
