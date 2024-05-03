@@ -1,5 +1,3 @@
-message(WARNING "MacOS configuration is not tested and may not work.")
-
 set(ARCH "universal" CACHE STRING "Target architecture (universal, arm64, x86_64, CUSTOM)")
 
 set(MACOS_DEPLOYMENT_TARGET "DEFAULT" CACHE STRING "")
@@ -17,7 +15,7 @@ list(APPEND GODOT_DEFINITIONS
 	UNIX_ENABLED
 )
 
-list(APPEND GODOT_CC_FLAGS
+list(APPEND GODOT_C_FLAGS
 	$<$<STREQUAL:${ARCH},universal>:
 		"SHELL:-arch x86_64"
 		"SHELL:-arch arm64"

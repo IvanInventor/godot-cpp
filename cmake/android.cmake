@@ -21,7 +21,7 @@ list(APPEND GODOT_DEFINITIONS
 	UNIX_ENABLED
 )
 
-list(APPEND GODOT_CC_FLAGS
+list(APPEND GODOT_C_FLAGS
 	$<$<STREQUAL:${ARCH},arm32>:
 		--target=armv7a-linux-androideabi${ANDROID_PLATFORM}
 		-march=armv7-a

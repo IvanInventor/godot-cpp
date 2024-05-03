@@ -10,6 +10,7 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "")
 endif()
 
 set(TARGET "TEMPLATE_DEBUG" CACHE STRING "Target platform (EDITOR, TEMPLATE_DEBUG, TEMPLATE_RELEASE)")
+
 # Auto-detect platform
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
 	set(DEFAULT_GODOT_PLATFORM "LINUX")
@@ -22,7 +23,9 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "iOS")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Emscripten") # Set by providing Emscripten toolchain
 	set(DEFAULT_GODOT_PLATFORM "WEB")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Android") # Set by providing Android toolchain
-       set(DEFAULT_GODOT_PLATFORM "NOTFOUND")
+	set(DEFAULT_GODOT_PLATFORM "ANDROID")
+else()
+	set(DEFAULT_GODOT_PLATFORM "NOTFOUND")
 endif()
 
 set(GODOT_PLATFORM "${DEFAULT_GODOT_PLATFORM}" CACHE STRING "[Auto-detected] Target platform (LINUX, MACOS, WINDOWS, ANDROID, IOS, WEB)")
@@ -31,9 +34,8 @@ if("${GODOT_PLATFORM}" STREQUAL "NOTFOUND")
        message(FATAL_ERROR "Could not auto-detect platform for \"${CMAKE_SYSTEM_NAME}\" automatically, please specify with -DGODOT_PLATFORM=<platform>")
 endif()
 
-set(GODOT_PLATFORM "${DEFAULT_GODOT_PLATFORM}" CACHE STRING "[Auto-detected] Target platform (LINUX, MACOS, WINDOWS, ANDROID, IOS, WEB)")
-
 message(STATUS "Platform detected: ${GODOT_PLATFORM}")
+
 set(GDEXTENSION_DIR "${CMAKE_CURRENT_SOURCE_DIR}/gdextension" CACHE FILEPATH "Path to a directory containing GDExtension interface header")
 
 set(GDEXTENSION_API_FILE "${CMAKE_CURRENT_SOURCE_DIR}/gdextension/extension_api.json" CACHE FILEPATH "Path to GDExtension API JSON file")
@@ -98,7 +100,7 @@ set(DEFAULT_OPTIMIZATION "$<NOT:${DEFAULT_OPTIMIZATION_DEBUG_FEATURES}>")
 
 set(DEBUG_SYMBOLS_ENABLED "$<OR:$<BOOL:${DEBUG_SYMBOLS}>,$<IN_LIST:${CONFIG},${CONFIGS_WITH_DEBUG}>>")
 
-# Clean default options
+# Clear default options
 set(CMAKE_CXX_FLAGS_DEBUG "")
 set(CMAKE_CXX_FLAGS_RELEASE "")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "")
@@ -136,7 +138,7 @@ list(APPEND GODOT_DEFINITIONS
 	>
 )
 
-list(APPEND GODOT_CC_FLAGS
+list(APPEND GODOT_C_FLAGS
 	$<${compiler_is_msvc}:
 		$<${DEBUG_SYMBOLS_ENABLED}:
 			/Zi
@@ -302,6 +304,6 @@ endif()
 # Write all flags to file for cmake configuration debug
 file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/flags-${CONFIG}.txt"
 	CONTENT
-	"C_FLAGS '${GODOT_CC_FLAGS}'\nCXX_FLAGS '${GODOT_CXX_FLAGS}'\nLINK_FLAGS '${GODOT_LINK_FLAGS}'\nCOMPILE_WARNING_FLAGS '${GODOT_COMPILE_WARNING_FLAGS}'\nDEFINITIONS '${GODOT_DEFINITIONS}'"
+	"C_FLAGS '${GODOT_C_FLAGS}'\nCXX_FLAGS '${GODOT_CXX_FLAGS}'\nLINK_FLAGS '${GODOT_LINK_FLAGS}'\nCOMPILE_WARNING_FLAGS '${GODOT_COMPILE_WARNING_FLAGS}'\nDEFINITIONS '${GODOT_DEFINITIONS}'"
 	TARGET ${PROJECT_NAME}
 )

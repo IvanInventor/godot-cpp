@@ -15,7 +15,7 @@ list(APPEND GODOT_DEFINITIONS
 	>
 )
 
-list(APPEND GODOT_CC_FLAGS
+list(APPEND GODOT_C_FLAGS
 	$<${compiler_is_msvc}:
 		/utf-8
 
