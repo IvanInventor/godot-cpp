@@ -16,6 +16,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+
+        # TODO: remove after CMake IOS config is ready
         exclude:
           - builder:
               name: CMake
@@ -263,8 +265,6 @@ jobs:
           chmod +x ./godot-artifacts/godot.linuxbsd.editor.x86_64.mono
           ./godot-artifacts/godot.linuxbsd.editor.x86_64.mono --headless --version
           cd test
-          # Need to run the editor so .godot is generated... but it crashes! Ignore that :-)
-          (cd project && (timeout 10 ../../godot-artifacts/godot.linuxbsd.editor.x86_64.mono --editor --headless --quit >/dev/null 2>&1 || true))
           GODOT=../godot-artifacts/godot.linuxbsd.editor.x86_64.mono ./run-tests.sh
 
       - name: Upload artifact
