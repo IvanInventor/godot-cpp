@@ -1,5 +1,5 @@
-# Configuration for building godot-cpp only
-# See `tests/CMakeLists.txt` for example configuration
+##########       Configuration for building godot-cpp only      ##########
+########## See `tests/CMakeLists.txt` for example configuration ##########
 #
 # Main cmake arguments
 #
@@ -28,10 +28,12 @@
 # cmake . -Bbuild
 # cmake --build build
 #
+#
 # Builds template_release version
 #
 # cmake -DTARGET=TEMPLATE_RELEASE -Bbuild
 # cmake --build build
+#
 #
 # Creates multi-config setup and builds Release version
 #
@@ -39,6 +41,7 @@
 # 							OR
 # cmake -G "Visual Studio 16 2019" -A x64 -Bbuild 	# For Windows/MSVC
 # cmake --build build --config Release
+#
 #
 # Builds web version, using Emscripten toolchain
 #
@@ -52,8 +55,9 @@
 # cmake --build build
 #
 #
-# TODO:
-# Test builds for MacOS/IOS
+# Builds MacOS version via Xcode
+# cmake -G Xcode -Bbuild
+# cmake --build build
 
 cmake_minimum_required(VERSION 3.13)
 project(godot-cpp LANGUAGES CXX)

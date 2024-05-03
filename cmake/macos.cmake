@@ -25,7 +25,7 @@ list(APPEND GODOT_C_FLAGS
 	>
 
 	$<$<NOT:$<STREQUAL:${MACOS_DEPLOYMENT_TARGET},DEFAULT>>:
-		-mmacosx-version-min=${MACOS_DEPLOYMENT_TARGET}
+	-mmacosx-version-min=${MACOS_DEPLOYMENT_TARGET}
 	>
 )
 

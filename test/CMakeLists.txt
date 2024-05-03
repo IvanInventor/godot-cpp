@@ -11,8 +11,8 @@ add_subdirectory(
 )
 
 # Get Sources
-file(GLOB_RECURSE SOURCES src/*.c**)
-file(GLOB_RECURSE HEADERS src/*.h**)
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS src/*.c**)
+file(GLOB_RECURSE HEADERS CONFIGURE_DEPENDS src/*.h**)
 
 get_target_property(LIBRARY_SUFFIX godot-cpp LIBRARY_SUFFIX)
 
