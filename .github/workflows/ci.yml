@@ -42,7 +42,7 @@ jobs:
 
           - name: CMake
             generate_sources: |
-              cmake {0} -DCMAKE_BUILD_TYPE=Debug -B build test
+              cmake {0} -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache -B build test
 
             build_godot_cpp_debug: |
               cmake --build build --config Debug --target godot-cpp
@@ -51,7 +51,7 @@ jobs:
               cmake --build build --config Debug
 
             build_release: |
-              cmake {0} -DCMAKE_BUILD_TYPE=Release -DTARGET=TEMPLATE_RELEASE -B build_release test
+              cmake {0} -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache -DTARGET=TEMPLATE_RELEASE -B build_release test
               cmake --build build_release --config Release
 
         platforms:
@@ -213,6 +213,12 @@ jobs:
       - name: Install CMake
         if: ${{ matrix.builder.name == 'CMake' }}
         uses: ssrobins/install-cmake@v1
+
+      - name: Install ccache
+        if: ${{ matrix.builder.name == 'CMake' }}
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ matrix.platforms.cache-name }}
 
       - name: Install Ninja
         if: ${{ matrix.builder.name == 'CMake' }}
