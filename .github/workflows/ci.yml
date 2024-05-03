@@ -16,6 +16,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        exclude:
+          - builder:
+              name: CMake
+
+            platforms:
+              name: 🍏 iOS
+
         builder:
           - name: SCons
             generate_sources: |
