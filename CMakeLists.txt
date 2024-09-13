@@ -3,17 +3,18 @@
 #
 # Main cmake arguments
 #
-# CMAKE_BUILD_TYPE			Compilation target (Debug, Release, RelWithDebInfo, MinSizeRel)
+# CMAKE_BUILD_TYPE				Compilation target (Debug, Release, RelWithDebInfo, MinSizeRel)
 #
-# CMAKE_CONFIGURATION_TYPES 		Set to "Debug;Release;RelWithDebInfo;MinSizeRel"
-#					in top project config or via cmdline (see `test/CMakeLists.txt`)
+# CMAKE_CONFIGURATION_TYPES 	Set to "Debug;Release;RelWithDebInfo;MinSizeRel"
+#								in top project config or via cmdline (see `test/CMakeLists.txt`)
 #
-# TARGET				Godot build target (EDITOR, TEMPLATE_DEBUG, TEMPLATE_RELEASE)
+# GODOT_TARGET					Godot build target (EDITOR, TEMPLATE_DEBUG, TEMPLATE_RELEASE)
 #
-# PLATFORM:	Platform type (LINUX, MACOS, WINDOWS, ANDROID, IOS, WEB)
+# GODOT_PLATFORM:	Platform type (LINUX, MACOS, WINDOWS, ANDROID, IOS, WEB)
 #	Auto-detected by default depending on current OS or chosen toolchain
 #
 # godot-cpp cmake arguments
+#
 # GODOT_GDEXTENSION_DIR:		Path to the directory containing GDExtension interface header and API JSON file
 # GODOT_CPP_SYSTEM_HEADERS		Mark the header files as SYSTEM. This may be useful to suppress warnings in projects including this one.
 # GODOT_CPP_WARNING_AS_ERROR	Treat any warnings as errors
@@ -39,7 +40,7 @@
 #
 # Builds template_release version
 #
-# cmake -DTARGET=TEMPLATE_RELEASE -Bbuild
+# cmake -DGODOT_TARGET=TEMPLATE_RELEASE -Bbuild
 # cmake --build build
 #
 #
