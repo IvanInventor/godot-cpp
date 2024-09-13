@@ -29,7 +29,7 @@ list(APPEND GODOT_C_FLAGS
 )
 
 list(APPEND GODOT_CXX_FLAGS
-	$<$<AND:$<BOOL:${USE_HOT_RELOAD}>,${compiler_is_gnu}>:
+	$<$<AND:$<BOOL:${GODOT_USE_HOT_RELOAD}>,${compiler_is_gnu}>:
 		-fno-gnu-unique
 	>
 )

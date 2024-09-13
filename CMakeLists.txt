@@ -18,9 +18,9 @@
 # GODOT_GDEXTENSION_DIR:		Path to the directory containing GDExtension interface header and API JSON file
 # GODOT_CPP_SYSTEM_HEADERS		Mark the header files as SYSTEM. This may be useful to suppress warnings in projects including this one.
 # GODOT_CPP_WARNING_AS_ERROR	Treat any warnings as errors
-# GODOT_ENABLE_HOT_RELOAD       Build with hot reload support. Defaults to YES for Debug-builds and NO for Release-builds.
-# GODOT_CUSTOM_API_FILE:		Path to a custom GDExtension API JSON file (takes precedence over `gdextension_dir`)
-# FLOAT_PRECISION:				Floating-point precision level ("single", "double")
+# GODOT_USE_HOT_RELOAD       Build with hot reload support. Defaults to YES for Debug-builds and NO for Release-builds.
+# GODOT_GDEXTENSION_API_FILE:		Path to a custom GDExtension API JSON file (takes precedence over `gdextension_dir`)
+# GODOT_FLOAT_PRECISION:				Floating-point precision level ("single", "double")
 #
 # other global and chosen platform-specific options:
 #
@@ -47,7 +47,7 @@
 # Creates multi-config setup and builds Release version
 #
 # cmake -G "Ninja Multi-Config" -Bbuild 		# For Linux/non-MSVC
-# 							OR
+#	OR
 # cmake -G "Visual Studio 16 2019" -A x64 -Bbuild 	# For Windows/MSVC
 # cmake --build build --config Release
 #
@@ -69,7 +69,7 @@
 # cmake --build build
 #
 # Ensure that you avoid exposing godot-cpp symbols - this might lead to hard to debug errors if you ever load multiple
-# plugins using difference godot-cpp versions. Use visibility hidden whenever possible:
+# plugins using different godot-cpp versions. Use visibility hidden whenever possible:
 # set_target_properties(<all-my-plugin-related-targets> PROPERTIES CXX_VISIBILITY_PRESET hidden)
 #
 
@@ -84,13 +84,13 @@ include(godotcpp)
 # Generate source from the bindings file
 find_package(Python3 3.4 REQUIRED) # pathlib should be present
 
-execute_process(COMMAND "${Python3_EXECUTABLE}" "-c" "import binding_generator; binding_generator.print_file_list(\"${GDEXTENSION_API_FILE}\", \"${CMAKE_CURRENT_BINARY_DIR}\", headers=True, sources=True)"
+execute_process(COMMAND "${Python3_EXECUTABLE}" "-c" "import binding_generator; binding_generator.print_file_list(\"${GODOT_GDEXTENSION_API_FILE}\", \"${CMAKE_CURRENT_BINARY_DIR}\", headers=True, sources=True)"
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 	OUTPUT_VARIABLE GENERATED_FILES_LIST
 	OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-string(TOLOWER ${FLOAT_PRECISION} FLOAT_PRECISION_ARG)
+string(TOLOWER ${GODOT_FLOAT_PRECISION} GODOT_FLOAT_PRECISION_ARG)
 if(GENERATE_TEMPLATE_GET_NODE)
 	set(GENERATE_BINDING_PARAMETERS "True")
 else()
@@ -98,19 +98,17 @@ else()
 endif()
 
 add_custom_command(OUTPUT ${GENERATED_FILES_LIST}
-		COMMAND "${Python3_EXECUTABLE}" "-c" "import binding_generator; binding_generator.generate_bindings(\"${GDEXTENSION_API_FILE}\", \"${GENERATE_BINDING_PARAMETERS}\", \"${BITS}\", \"${FLOAT_PRECISION_ARG}\", \"${CMAKE_CURRENT_BINARY_DIR}\")"
+	COMMAND "${Python3_EXECUTABLE}" "-c" "import binding_generator; binding_generator.generate_bindings(\"${GODOT_GDEXTENSION_API_FILE}\", \"${GENERATE_BINDING_PARAMETERS}\", \"${BITS}\", \"${GODOT_FLOAT_PRECISION_ARG}\", \"${CMAKE_CURRENT_BINARY_DIR}\")"
 		VERBATIM
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-		MAIN_DEPENDENCY ${GDEXTENSION_API_FILE}
+		MAIN_DEPENDENCY ${GODOT_GDEXTENSION_API_FILE}
 		DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/binding_generator.py
 		COMMENT "Generating bindings"
 )
 
-# Get Sources
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS src/*.c**)
 file(GLOB_RECURSE HEADERS CONFIGURE_DEPENDS include/*.h**)
 
-# Define our godot-cpp library
 add_library(${PROJECT_NAME}
 		${SOURCES}
 		${HEADERS}
@@ -118,34 +116,9 @@ add_library(${PROJECT_NAME}
 )
 add_library(godot::cpp ALIAS ${PROJECT_NAME})
 
-include(GodotCompilerWarnings)
-
 target_compile_features(${PROJECT_NAME}
 	PRIVATE
 		cxx_std_17
-)
-
-if(GODOT_ENABLE_HOT_RELOAD)
-	target_compile_definitions(${PROJECT_NAME} PUBLIC HOT_RELOAD_ENABLED)
-	target_compile_options(${PROJECT_NAME} PUBLIC $<${compiler_is_gnu}:-fno-gnu-unique>)
-endif()
-
-target_compile_definitions(${PROJECT_NAME} PUBLIC
-	$<$<CONFIG:Debug>:
-		DEBUG_ENABLED
-		DEBUG_METHODS_ENABLED
-	>
-	$<${compiler_is_msvc}:
-		TYPED_METHOD_BIND
-	>
-)
-
-target_link_options(${PROJECT_NAME} PRIVATE
-	$<$<NOT:${compiler_is_msvc}>:
-		-static-libgcc
-		-static-libstdc++
-		-Wl,-R,'$$ORIGIN'
-	>
 )
 
 # Optionally mark headers as SYSTEM
@@ -157,7 +130,7 @@ endif ()
 target_include_directories(${PROJECT_NAME} ${GODOT_CPP_SYSTEM_HEADERS_ATTRIBUTE} PUBLIC
 	include
 	${CMAKE_CURRENT_BINARY_DIR}/gen/include
-	${GDEXTENSION_DIR}
+	${GODOT_GDEXTENSION_DIR}
 )
 
 target_compile_features(${PROJECT_NAME} PUBLIC

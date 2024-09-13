@@ -36,22 +36,26 @@ endif()
 
 message(STATUS "Platform detected: ${GODOT_PLATFORM}")
 
-set(GDEXTENSION_DIR "${CMAKE_CURRENT_SOURCE_DIR}/gdextension" CACHE FILEPATH "Path to a directory containing GDExtension interface header")
+set(GODOT_GDEXTENSION_DIR "${CMAKE_CURRENT_SOURCE_DIR}/gdextension" CACHE FILEPATH "Path to a directory containing GDExtension interface header")
 
-set(GDEXTENSION_API_FILE "${CMAKE_CURRENT_SOURCE_DIR}/gdextension/extension_api.json" CACHE FILEPATH "Path to GDExtension API JSON file")
+set(GODOT_GDEXTENSION_API_FILE "${GODOT_GDEXTENSION_DIR}/extension_api.json" CACHE FILEPATH "Path to GDExtension API JSON file")
 
-set(FLOAT_PRECISION "SINGLE" CACHE STRING "Floating-point precision level (SINGLE, DOUBLE)")
+set(GODOT_FLOAT_PRECISION "SINGLE" CACHE STRING "Floating-point precision level (SINGLE, DOUBLE)")
 
 set(OPTIMIZE "AUTO" CACHE STRING "The desired optimization flags (NONE, CUSTOM, DEBUG, SPEED, SPEED_TRACE, SIZE)")
 
-set(SYMBOLS_VISIBILITY "AUTO" CACHE STRING "Symbols visibility on GNU platforms (AUTO, VISIBLE, HIDDEN)")
+set(GODOT_SYMBOLS_VISIBILITY "AUTO" CACHE STRING "Symbols visibility on GNU platforms (AUTO, VISIBLE, HIDDEN)")
 
 
 option(DEV_BUILD "Developer build with dev-only debugging code" OFF)
 
 option(DEBUG_SYMBOLS "Force build with debugging symbols" OFF)
 
-option(USE_HOT_RELOAD "Enable the extra accounting required to support hot reload" ON)
+set(DEFAULT_GODOT_USE_HOT_RELOAD ON)
+if("${GODOT_TARGET}" STREQUAL "TEMPLATE_RELEASE")
+	set(DEFAULT_GODOT_USE_HOT_RELOAD OFF)
+endif()
+option(GODOT_USE_HOT_RELOAD "Enable the extra accounting required to support hot reload" ${DEFAULT_GODOT_USE_HOT_RELOAD})
 
 # Disable exception handling. Godot doesn't use exceptions anywhere, and this
 # saves around 20% of binary size and very significant build time (GH-80513).
@@ -69,7 +73,7 @@ set(DEFAULT_WARNING_AS_ERROR OFF)
 if(${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
 	set(DEFAULT_WARNING_AS_ERROR ON)
 endif()
-set(GODOT_CPP_WARNING_AS_ERROR ${DEFAULT_WARNING_AS_ERROR} CACHE BOOL "Treat warnings as errors")
+set(GODOT_CPP_WARNING_AS_ERROR "${DEFAULT_WARNING_AS_ERROR}" CACHE BOOL "Treat warnings as errors")
 
 option(GENERATE_TEMPLATE_GET_NODE "Generate a template version of the Node class's get_node" ON)
 
@@ -84,7 +88,7 @@ if(${DEV_BUILD})
 	string(APPEND LIBRARY_SUFFIX ".dev")
 endif()
 
-if(${FLOAT_PRECISION} STREQUAL "DOUBLE")
+if(${GODOT_FLOAT_PRECISION} STREQUAL "DOUBLE")
 	string(APPEND LIBRARY_SUFFIX ".double")
 endif()
 
@@ -115,10 +119,10 @@ list(APPEND GODOT_DEFINITIONS
 		>
 	>
 
-	$<$<STREQUAL:${FLOAT_PRECISION},DOUBLE>:
+	$<$<STREQUAL:${GODOT_FLOAT_PRECISION},DOUBLE>:
 		REAL_T_IS_DOUBLE
 	>
-	$<$<AND:$<NOT:$<STREQUAL:${GODOT_TARGET},TEMPLATE_RELEASE>>,$<BOOL:${USE_HOT_RELOAD}>>:
+	$<$<BOOL:${GODOT_USE_HOT_RELOAD}>:
 		HOT_RELOAD_ENABLED
 	>
 	$<$<STREQUAL:${GODOT_TARGET},EDITOR>:
@@ -180,10 +184,10 @@ list(APPEND GODOT_C_FLAGS
 			>
 		>
 
-		$<$<STREQUAL:${SYMBOLS_VISIBILITY},VISIBLE>:
+		$<$<STREQUAL:${GODOT_SYMBOLS_VISIBILITY},VISIBLE>:
 			-fvisibility=default
 		>
-		$<$<STREQUAL:${SYMBOLS_VISIBILITY},HIDDEN>:
+		$<$<STREQUAL:${GODOT_SYMBOLS_VISIBILITY},HIDDEN>:
 			-fvisibility=hidden
 		>
 
@@ -253,10 +257,10 @@ list(APPEND GODOT_LINK_FLAGS
 		>
 	>
 	$<$<NOT:${compiler_is_msvc}>:
-		$<$<STREQUAL:${SYMBOLS_VISIBILITY},VISIBLE>:
+		$<$<STREQUAL:${GODOT_SYMBOLS_VISIBILITY},VISIBLE>:
 			-fvisibility=default
 		>
-		$<$<STREQUAL:${SYMBOLS_VISIBILITY},HIDDEN>:
+		$<$<STREQUAL:${GODOT_SYMBOLS_VISIBILITY},HIDDEN>:
 			-fvisibility=hidden
 		>
 
