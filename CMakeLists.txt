@@ -19,8 +19,8 @@
 # GODOT_CPP_SYSTEM_HEADERS		Mark the header files as SYSTEM. This may be useful to suppress warnings in projects including this one.
 # GODOT_CPP_WARNING_AS_ERROR	Treat any warnings as errors
 # GODOT_USE_HOT_RELOAD       Build with hot reload support. Defaults to YES for Debug-builds and NO for Release-builds.
-# GODOT_GDEXTENSION_API_FILE:		Path to a custom GDExtension API JSON file (takes precedence over `gdextension_dir`)
-# GODOT_FLOAT_PRECISION:				Floating-point precision level ("single", "double")
+# GODOT_CUSTOM_API_FILE:		Path to a custom GDExtension API JSON file (takes precedence over `gdextension_dir`)
+# GODOT_PRECISION:				Floating-point precision level ("single", "double")
 #
 # other global and chosen platform-specific options:
 #
@@ -84,24 +84,24 @@ include(godotcpp)
 # Generate source from the bindings file
 find_package(Python3 3.4 REQUIRED) # pathlib should be present
 
-execute_process(COMMAND "${Python3_EXECUTABLE}" "-c" "import binding_generator; binding_generator.print_file_list(\"${GODOT_GDEXTENSION_API_FILE}\", \"${CMAKE_CURRENT_BINARY_DIR}\", headers=True, sources=True)"
+execute_process(COMMAND "${Python3_EXECUTABLE}" "-c" "import binding_generator; binding_generator.print_file_list(\"${GODOT_CUSTOM_API_FILE}\", \"${CMAKE_CURRENT_BINARY_DIR}\", headers=True, sources=True)"
 	WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 	OUTPUT_VARIABLE GENERATED_FILES_LIST
 	OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-string(TOLOWER ${GODOT_FLOAT_PRECISION} GODOT_FLOAT_PRECISION_ARG)
-if(GENERATE_TEMPLATE_GET_NODE)
+string(TOLOWER ${GODOT_PRECISION} GODOT_PRECISION_ARG)
+if(GODOT_GENERATE_TEMPLATE_GET_NODE)
 	set(GENERATE_BINDING_PARAMETERS "True")
 else()
 	set(GENERATE_BINDING_PARAMETERS "False")
 endif()
 
 add_custom_command(OUTPUT ${GENERATED_FILES_LIST}
-	COMMAND "${Python3_EXECUTABLE}" "-c" "import binding_generator; binding_generator.generate_bindings(\"${GODOT_GDEXTENSION_API_FILE}\", \"${GENERATE_BINDING_PARAMETERS}\", \"${BITS}\", \"${GODOT_FLOAT_PRECISION_ARG}\", \"${CMAKE_CURRENT_BINARY_DIR}\")"
+	COMMAND "${Python3_EXECUTABLE}" "-c" "import binding_generator; binding_generator.generate_bindings(\"${GODOT_CUSTOM_API_FILE}\", \"${GENERATE_BINDING_PARAMETERS}\", \"${GODOT_BITS}\", \"${GODOT_PRECISION_ARG}\", \"${CMAKE_CURRENT_BINARY_DIR}\")"
 		VERBATIM
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-		MAIN_DEPENDENCY ${GODOT_GDEXTENSION_API_FILE}
+		MAIN_DEPENDENCY ${GODOT_CUSTOM_API_FILE}
 		DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/binding_generator.py
 		COMMENT "Generating bindings"
 )

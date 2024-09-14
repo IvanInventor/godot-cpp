@@ -1,9 +1,9 @@
 # Used with Emscripted toolchain at *toolchain_dir*/cmake/Modules/Platform/Emscripten.cmake
 
-set(ARCH "wasm32" CACHE STRING "Target architecture (wasm32, CUSTOM)")
+set(GODOT_ARCH "wasm32" CACHE STRING "Target architecture (wasm32, CUSTOM)")
 
-string(REGEX MATCH "32$|64$" DEFAULT_BITS "${ARCH}")
-set(BITS "${DEFAULT_BITS}" CACHE STRING "Architecture bits. Needs to be set manually for custom architecture")
+string(REGEX MATCH "32$|64$" DEFAULT_GODOT_BITS "${GODOT_ARCH}")
+set(GODOT_BITS "${DEFAULT_GODOT_BITS}" CACHE STRING "Architecture bits. Needs to be set manually for custom architecture")
 
 
 list(APPEND GODOT_DEFINITIONS

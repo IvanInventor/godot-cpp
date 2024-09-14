@@ -2,7 +2,7 @@
 
 ### Options
 
-set(CONFIGS_WITH_DEBUG "Debug;RelWithDebInfo" CACHE STRING "Configurations that should have debug symbols (Modify if support for custom configurations is needed)")
+set(GODOT_CONFIGS_WITH_DEBUG "Debug;RelWithDebInfo" CACHE STRING "Configurations that should have debug symbols (Modify if support for custom configurations is needed)")
 
 # Default config
 if("${CMAKE_BUILD_TYPE}" STREQUAL "")
@@ -38,18 +38,18 @@ message(STATUS "Platform detected: ${GODOT_PLATFORM}")
 
 set(GODOT_GDEXTENSION_DIR "${CMAKE_CURRENT_SOURCE_DIR}/gdextension" CACHE FILEPATH "Path to a directory containing GDExtension interface header")
 
-set(GODOT_GDEXTENSION_API_FILE "${GODOT_GDEXTENSION_DIR}/extension_api.json" CACHE FILEPATH "Path to GDExtension API JSON file")
+set(GODOT_CUSTOM_API_FILE "${GODOT_GDEXTENSION_DIR}/extension_api.json" CACHE FILEPATH "Path to GDExtension API JSON file")
 
-set(GODOT_FLOAT_PRECISION "SINGLE" CACHE STRING "Floating-point precision level (SINGLE, DOUBLE)")
+set(GODOT_PRECISION "SINGLE" CACHE STRING "Floating-point precision level (SINGLE, DOUBLE)")
 
-set(OPTIMIZE "AUTO" CACHE STRING "The desired optimization flags (NONE, CUSTOM, DEBUG, SPEED, SPEED_TRACE, SIZE)")
+set(GODOT_OPTIMIZE "AUTO" CACHE STRING "The desired optimization flags (NONE, CUSTOM, DEBUG, SPEED, SPEED_TRACE, SIZE)")
 
 set(GODOT_SYMBOLS_VISIBILITY "AUTO" CACHE STRING "Symbols visibility on GNU platforms (AUTO, VISIBLE, HIDDEN)")
 
 
-option(DEV_BUILD "Developer build with dev-only debugging code" OFF)
+option(GODOT_DEV_BUILD "Developer build with dev-only debugging code" OFF)
 
-option(DEBUG_SYMBOLS "Force build with debugging symbols" OFF)
+option(GODOT_DEBUG_SYMBOLS "Force build with debugging symbols" OFF)
 
 set(DEFAULT_GODOT_USE_HOT_RELOAD ON)
 if("${GODOT_TARGET}" STREQUAL "TEMPLATE_RELEASE")
@@ -75,7 +75,7 @@ if(${CMAKE_PROJECT_NAME} STREQUAL ${PROJECT_NAME})
 endif()
 set(GODOT_CPP_WARNING_AS_ERROR "${DEFAULT_WARNING_AS_ERROR}" CACHE BOOL "Treat warnings as errors")
 
-option(GENERATE_TEMPLATE_GET_NODE "Generate a template version of the Node class's get_node" ON)
+option(GODOT_GENERATE_TEMPLATE_GET_NODE "Generate a template version of the Node class's get_node" ON)
 
 ###
 
@@ -84,11 +84,11 @@ include(GodotCompilerWarnings)
 
 # Create the correct name (godot-cpp.platform.target)
 # See more prefix appends in platform-specific configs
-if(${DEV_BUILD})
+if(${GODOT_DEV_BUILD})
 	string(APPEND LIBRARY_SUFFIX ".dev")
 endif()
 
-if(${GODOT_FLOAT_PRECISION} STREQUAL "DOUBLE")
+if("${GODOT_PRECISION}" STREQUAL "DOUBLE")
 	string(APPEND LIBRARY_SUFFIX ".double")
 endif()
 
@@ -98,11 +98,11 @@ set(CONFIG "$<IF:$<STREQUAL:,$<CONFIG>>,${CMAKE_BUILD_TYPE},$<CONFIG>>")
 string(TOLOWER ".${GODOT_PLATFORM}.${GODOT_TARGET}" platform_target)
 string(PREPEND LIBRARY_SUFFIX ${platform_target})
 
-# Default optimization levels if OPTIMIZE=AUTO, for multi-config support
+# Default optimization levels if GODOT_OPTIMIZE=AUTO, for multi-config support
 set(DEFAULT_OPTIMIZATION_DEBUG_FEATURES "$<OR:$<STREQUAL:${GODOT_TARGET},EDITOR>,$<STREQUAL:${GODOT_TARGET},TEMPLATE_DEBUG>>")
 set(DEFAULT_OPTIMIZATION "$<NOT:${DEFAULT_OPTIMIZATION_DEBUG_FEATURES}>")
 
-set(DEBUG_SYMBOLS_ENABLED "$<OR:$<BOOL:${DEBUG_SYMBOLS}>,$<IN_LIST:${CONFIG},${CONFIGS_WITH_DEBUG}>>")
+set(GODOT_DEBUG_SYMBOLS_ENABLED "$<OR:$<BOOL:${GODOT_DEBUG_SYMBOLS}>,$<IN_LIST:${CONFIG},${GODOT_CONFIGS_WITH_DEBUG}>>")
 
 # Clear default options
 set(CMAKE_CXX_FLAGS_DEBUG "")
@@ -119,7 +119,7 @@ list(APPEND GODOT_DEFINITIONS
 		>
 	>
 
-	$<$<STREQUAL:${GODOT_FLOAT_PRECISION},DOUBLE>:
+	$<$<STREQUAL:${GODOT_PRECISION},DOUBLE>:
 		REAL_T_IS_DOUBLE
 	>
 	$<$<BOOL:${GODOT_USE_HOT_RELOAD}>:
@@ -129,10 +129,10 @@ list(APPEND GODOT_DEFINITIONS
 		TOOLS_ENABLED
 	>
 
-	$<$<BOOL:${DEV_BUILD}>:
+	$<$<BOOL:${GODOT_DEV_BUILD}>:
 		DEV_ENABLED
 	>
-	$<$<NOT:$<BOOL:${DEV_BUILD}>>:
+	$<$<NOT:$<BOOL:${GODOT_DEV_BUILD}>>:
 		NDEBUG
 	>
 
@@ -144,13 +144,13 @@ list(APPEND GODOT_DEFINITIONS
 
 list(APPEND GODOT_C_FLAGS
 	$<${compiler_is_msvc}:
-		$<${DEBUG_SYMBOLS_ENABLED}:
+		$<${GODOT_DEBUG_SYMBOLS_ENABLED}:
 			/Zi
 			/FS
 		>
 
-		$<$<STREQUAL:${OPTIMIZE},AUTO>:
-		$<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:
+		$<$<STREQUAL:${GODOT_OPTIMIZE},AUTO>:
+			$<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:
 				$<${DEFAULT_OPTIMIZATION}:
 					/O2
 				>
@@ -165,21 +165,21 @@ list(APPEND GODOT_C_FLAGS
 				/Od
 			>
 		>
-		$<$<STREQUAL:${OPTIMIZE},SPEED>:/O2>
-		$<$<STREQUAL:${OPTIMIZE},SPEED_TRACE>:/O2>
-		$<$<STREQUAL:${OPTIMIZE},SIZE>:/O1>
-		$<$<STREQUAL:${OPTIMIZE},DEBUG>:/Od>
-		$<$<STREQUAL:${OPTIMIZE},NONE>:/Od>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},SPEED>:/O2>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},SPEED_TRACE>:/O2>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},SIZE>:/O1>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},DEBUG>:/Od>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},NONE>:/Od>
 
 	>
 	$<$<NOT:${compiler_is_msvc}>:
-		$<${DEBUG_SYMBOLS_ENABLED}:
+		$<${GODOT_DEBUG_SYMBOLS_ENABLED}:
 			-gdwarf-4
 
-			$<$<BOOL:${DEV_BUILD}>:
+			$<$<BOOL:${GODOT_DEV_BUILD}>:
 				-g3
 			>
-			$<$<NOT:$<BOOL:${DEV_BUILD}>>:
+			$<$<NOT:$<BOOL:${GODOT_DEV_BUILD}>>:
 				-g2
 			>
 		>
@@ -191,8 +191,8 @@ list(APPEND GODOT_C_FLAGS
 			-fvisibility=hidden
 		>
 
-		$<$<STREQUAL:${OPTIMIZE},AUTO>:
-		$<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:
+		$<$<STREQUAL:${GODOT_OPTIMIZE},AUTO>:
+			$<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:
 				$<${DEFAULT_OPTIMIZATION}:
 					-O3
 				>
@@ -207,13 +207,11 @@ list(APPEND GODOT_C_FLAGS
 				-Og
 			>
 		>
-		$<$<NOT:$<STREQUAL:${OPTIMIZE},AUTO>>:
-			$<$<STREQUAL:${OPTIMIZE},SPEED>:-O3>
-			$<$<STREQUAL:${OPTIMIZE},SPEED_TRACE>:-O2>
-			$<$<STREQUAL:${OPTIMIZE},SIZE>:-Os>
-			$<$<STREQUAL:${OPTIMIZE},DEBUG>:-Og>
-			$<$<STREQUAL:${OPTIMIZE},NONE>:-O0>
-		>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},SPEED>:-O3>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},SPEED_TRACE>:-O2>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},SIZE>:-Os>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},DEBUG>:-Og>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},NONE>:-O0>
 	>
 )
 
@@ -232,11 +230,11 @@ list(APPEND GODOT_CXX_FLAGS
 
 list(APPEND GODOT_LINK_FLAGS
 	$<${compiler_is_msvc}:
-		$<${DEBUG_SYMBOLS_ENABLED}:
+		$<${GODOT_DEBUG_SYMBOLS_ENABLED}:
 			/DEBUG:FULL
 		>
 
-		$<$<STREQUAL:${OPTIMIZE},AUTO>:
+		$<$<STREQUAL:${GODOT_OPTIMIZE},AUTO>:
 		$<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:
 				$<${DEFAULT_OPTIMIZATION}:
 					/OPT:REF
@@ -250,11 +248,9 @@ list(APPEND GODOT_LINK_FLAGS
 				/OPT:REF
 			>
 		>
-		$<$<NOT:$<STREQUAL:${OPTIMIZE},AUTO>>:
-			$<$<STREQUAL:${OPTIMIZE},SPEED>:/OPT:REF>
-			$<$<STREQUAL:${OPTIMIZE},SPEED_TRACE>:/OPT:REF /OPT:NOICF>
-			$<$<STREQUAL:${OPTIMIZE},SIZE>:/OPT:REF>
-		>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},SPEED>:/OPT:REF>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},SPEED_TRACE>:/OPT:REF /OPT:NOICF>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},SIZE>:/OPT:REF>
 	>
 	$<$<NOT:${compiler_is_msvc}>:
 		$<$<STREQUAL:${GODOT_SYMBOLS_VISIBILITY},VISIBLE>:
@@ -264,7 +260,7 @@ list(APPEND GODOT_LINK_FLAGS
 			-fvisibility=hidden
 		>
 
-		$<$<NOT:${DEBUG_SYMBOLS_ENABLED}>:
+		$<$<NOT:${GODOT_DEBUG_SYMBOLS_ENABLED}>:
 			$<$<CXX_COMPILER_ID:AppleClang>: # SCons: not is_vanilla_clang(env)
 				"-Wl,-S"
 				"-Wl,-x"
@@ -294,9 +290,9 @@ else()
 	message(FATAL_ERROR "Platform not supported: ${GODOT_PLATFORM}")
 endif()
 
-# Mac/IOS use framework directory structure and don't need arch suffix
+# Mac/IOS uses .framework directory structure and don't need arch suffix
 if((NOT "${GODOT_PLATFORM}" STREQUAL "MACOS") AND (NOT "${GODOT_PLATFORM}" STREQUAL "IOS"))
-	string(APPEND LIBRARY_SUFFIX ".${ARCH}")
+	string(APPEND LIBRARY_SUFFIX ".${GODOT_ARCH}")
 endif()
 
 if(${IOS_SIMULATOR})

@@ -1,9 +1,9 @@
-set(ARCH "x86_64" CACHE STRING "Target architecture (x86_32, x86_64, CUSTOM)")
+set(GODOT_ARCH "x86_64" CACHE STRING "Target architecture (x86_32, x86_64, CUSTOM)")
 
-option(USE_STATIC_CPP "Link MinGW/MSVC C++ runtime libraries statically" ON)
+option(GODOT_USE_STATIC_CPP "Link MinGW/MSVC C++ runtime libraries statically" ON)
 
-string(REGEX MATCH "32$|64$" DEFAULT_BITS "${ARCH}")
-set(BITS "${DEFAULT_BITS}" CACHE STRING "Architecture bits. Needs to be set manually for custom architecture")
+string(REGEX MATCH "32$|64$" DEFAULT_GODOT_BITS "${GODOT_ARCH}")
+set(GODOT_BITS "${DEFAULT_GODOT_BITS}" CACHE STRING "Architecture bits. Needs to be set manually for custom architecture")
 
 
 list(APPEND GODOT_DEFINITIONS
@@ -19,10 +19,10 @@ list(APPEND GODOT_C_FLAGS
 	$<${compiler_is_msvc}:
 		/utf-8
 
-		$<$<BOOL:${USE_STATIC_CPP}>:
+		$<$<BOOL:${GODOT_USE_STATIC_CPP}>:
 			/MT
 		>
-		$<$<NOT:$<BOOL:${USE_STATIC_CPP}>>:
+		$<$<NOT:$<BOOL:${GODOT_USE_STATIC_CPP}>>:
 			/MD
 		>
 	>
@@ -35,10 +35,10 @@ list(APPEND GODOT_LINK_FLAGS
 	$<$<NOT:${compiler_is_msvc}>:
 		-Wl,--no-undefined
 
-		$<$<BOOL:${USE_STATIC_CPP}>:
+		$<$<BOOL:${GODOT_USE_STATIC_CPP}>:
 			-static
 			-static-libgcc
-                	-static-libstdc++
+            -static-libstdc++
 		>
 	>
 )

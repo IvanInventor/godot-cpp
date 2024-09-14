@@ -1,7 +1,7 @@
-set(ARCH "x86_64" CACHE STRING "Target architecture (x86_32, x86_64, arm64, rv64, CUSTOM)")
+set(GODOT_ARCH "x86_64" CACHE STRING "Target architecture (x86_32, x86_64, arm64, rv64, CUSTOM)")
 
-string(REGEX MATCH "32$|64$" DEFAULT_BITS "${ARCH}")
-set(BITS "${DEFAULT_BITS}" CACHE STRING "Architecture bits. Needs to be set manually for custom architecture")
+string(REGEX MATCH "32$|64$" DEFAULT_GODOT_BITS "${GODOT_ARCH}")
+set(GODOT_BITS "${DEFAULT_GODOT_BITS}" CACHE STRING "Architecture bits. Needs to be set manually for custom architecture")
 
 
 list(APPEND GODOT_DEFINITIONS
@@ -12,18 +12,18 @@ list(APPEND GODOT_DEFINITIONS
 list(APPEND GODOT_C_FLAGS
 	# -fPIC is controlled by POSITION_INDEPENDENT_CODE property
 
-	$<$<STREQUAL:${ARCH},x86_64>:
+	$<$<STREQUAL:${GODOT_ARCH},x86_64>:
 		-m64
 		-march=x86-64
 	>
-	$<$<STREQUAL:${ARCH},x86_32>:
+	$<$<STREQUAL:${GODOT_ARCH},x86_32>:
 		-m32
 		-march=i686
 	>
-	$<$<STREQUAL:${ARCH},arm64>:
+	$<$<STREQUAL:${GODOT_ARCH},arm64>:
 		-march=armv8-a
 	>
-	$<$<STREQUAL:${ARCH},rv64>:
+	$<$<STREQUAL:${GODOT_ARCH},rv64>:
 		-march=rv64gc
 	>
 )
@@ -37,18 +37,18 @@ list(APPEND GODOT_CXX_FLAGS
 list(APPEND GODOT_LINK_FLAGS
 	-Wl,-R,'$$ORIGIN'
 
-	$<$<STREQUAL:${ARCH},x86_64>:
+	$<$<STREQUAL:${GODOT_ARCH},x86_64>:
 		-m64
 		-march=x86-64
 	>
-	$<$<STREQUAL:${ARCH},x86_32>:
+	$<$<STREQUAL:${GODOT_ARCH},x86_32>:
 		-m32
 		-march=i686
 	>
-	$<$<STREQUAL:${ARCH},arm64>:
+	$<$<STREQUAL:${GODOT_ARCH},arm64>:
 		-march=armv8-a
 	>
-	$<$<STREQUAL:${ARCH},rv64>:
+	$<$<STREQUAL:${GODOT_ARCH},rv64>:
 		-march=rv64gc
 	>
 )
