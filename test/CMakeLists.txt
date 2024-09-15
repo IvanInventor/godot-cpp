@@ -16,6 +16,14 @@ file(GLOB_RECURSE HEADERS CONFIGURE_DEPENDS src/*.h**)
 
 get_target_property(LIBRARY_SUFFIX godot-cpp LIBRARY_SUFFIX)
 
+if("${GODOT_TARGET}" STREQUAL "EDITOR" OR "${GODOT_TARGET}" STREQUAL "TEMPLATE_DEBUG")
+	set(DOC_GEN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/gen/doc_data.gen.cpp")
+	file(GLOB_RECURSE DOC_FILES CONFIGURE_DEPENDS doc_classes/*.xml)
+
+	godot_make_doc(DESTINATION ${DOC_GEN_PATH} SOURCES ${DOC_FILES})
+	list(APPEND SOURCES ${DOC_GEN_PATH})
+endif()
+
 # Define our godot-cpp library
 if("${GODOT_PLATFORM}" STREQUAL "WEB")
 	# wasm libraries loaded with dlopen() are created like this in cmake
@@ -85,4 +93,3 @@ set_target_properties(${PROJECT_NAME}
 if(${GODOT_CPP_WARNING_AS_ERROR})
 	set_warning_as_error(${PROJECT_NAME})
 endif()
-
