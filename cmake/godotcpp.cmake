@@ -46,6 +46,8 @@ set(GODOT_OPTIMIZE "AUTO" CACHE STRING "The desired optimization flags (NONE, CU
 
 set(GODOT_SYMBOLS_VISIBILITY "AUTO" CACHE STRING "Symbols visibility on GNU platforms (AUTO, VISIBLE, HIDDEN)")
 
+set(GODOT_BUILD_PROFILE "" CACHE FILEPATH "Path to a file containing a feature build profile")
+
 
 option(GODOT_DEV_BUILD "Developer build with dev-only debugging code" OFF)
 
@@ -62,7 +64,7 @@ option(GODOT_USE_HOT_RELOAD "Enable the extra accounting required to support hot
 option(GODOT_DISABLE_EXCEPTIONS "Force disabling exception handling code" ON)
 
 # Optionally mark headers as SYSTEM
-option(GODOT_CPP_SYSTEM_HEADERS "Mark the header files as SYSTEM. This may be useful to supress warnings in projects including this one" OFF)
+option(GODOT_CPP_SYSTEM_HEADERS "Mark the header files as SYSTEM. This may be useful to suppress warnings in projects including this one" OFF)
 set(GODOT_CPP_SYSTEM_HEADERS_ATTRIBUTE "")
 if(GODOT_CPP_SYSTEM_HEADERS)
 	set(GODOT_CPP_SYSTEM_HEADERS_ATTRIBUTE SYSTEM)
@@ -76,6 +78,8 @@ endif()
 set(GODOT_CPP_WARNING_AS_ERROR "${DEFAULT_WARNING_AS_ERROR}" CACHE BOOL "Treat warnings as errors")
 
 option(GODOT_GENERATE_TEMPLATE_GET_NODE "Generate a template version of the Node class's get_node" ON)
+
+option(GODOT_THREADS "Enable threading support" ON)
 
 ###
 
@@ -139,6 +143,9 @@ list(APPEND GODOT_DEFINITIONS
 	$<$<NOT:$<STREQUAL:${GODOT_TARGET},TEMPLATE_RELEASE>>:
 		DEBUG_ENABLED
 		DEBUG_METHODS_ENABLED
+	>
+	$<$<BOOL:${GODOT_THREADS}>:
+		THREADS_ENABLED
 	>
 )
 
@@ -298,6 +305,11 @@ endif()
 if(${IOS_SIMULATOR})
 	string(APPEND LIBRARY_SUFFIX ".simulator")
 endif()
+
+if(NOT ${GODOT_THREADS})
+	string(APPEND LIBRARY_SUFFIX ".nothreads")
+endif()
+
 
 # Write all flags to file for cmake configuration debug (CMake 3.19+)
 #file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/flags-${CONFIG}.txt"
