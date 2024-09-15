@@ -2,7 +2,7 @@ import hashlib
 import zlib
 
 
-def make_doc(dst, source):
+def make_doc(dst, source, compression=zlib.Z_BEST_COMPRESSION):
     g = open(dst, "w", encoding="utf-8")
     buf = ""
     docbegin = ""
@@ -17,9 +17,7 @@ def make_doc(dst, source):
     buf = (docbegin + buf + docend).encode("utf-8")
     decomp_size = len(buf)
 
-    # Use maximum zlib compression level to further reduce file size
-    # (at the cost of initial build times).
-    buf = zlib.compress(buf, zlib.Z_BEST_COMPRESSION)
+    buf = zlib.compress(buf, compression)
 
     g.write("/* THIS FILE IS GENERATED DO NOT EDIT */\n")
     g.write("\n")
@@ -43,8 +41,11 @@ def make_doc(dst, source):
     g.close()
 
 
-# if ran as a script, use sys.argv[1] as destination and the rest as sources
+# if ran as a script, use input args as:
+#    sys.argv[1]    compression method
+#    sys.argv[2]    destination file
+#    sys.argv[3:]   .xml sources
 if __name__ == "__main__":
     import sys
 
-    make_doc(sys.argv[1], sys.argv[2:])
+    make_doc(sys.argv[2], sys.argv[3:], compression=getattr(zlib, sys.argv[1]))

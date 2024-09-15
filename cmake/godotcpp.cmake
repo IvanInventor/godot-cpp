@@ -314,15 +314,21 @@ endif()
 function(godot_make_doc)
 	find_package(Python3 3.4 REQUIRED)
 	set(options)
-	set(oneValueArgs DESTINATION)
+	set(oneValueArgs DESTINATION COMPRESSION)
 	set(multiValueArgs SOURCES)
 	cmake_parse_arguments(MAKE_DOC "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
+	if("${MAKE_DOC_COMPRESSION}" STREQUAL "")
+		set(MAKE_DOC_COMPRESSION "Z_BEST_COMPRESSION")
+	endif()
+
 	add_custom_command(OUTPUT ${MAKE_DOC_DESTINATION}
-		COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/../docs_generator.py"
-			"${MAKE_DOC_DESTINATION}" ${MAKE_DOC_SOURCES}
+		COMMAND "${Python3_EXECUTABLE}"
+			"${CMAKE_CURRENT_SOURCE_DIR}/../docs_generator.py"
+			"${MAKE_DOC_COMPRESSION}"
+			"${MAKE_DOC_DESTINATION}"
+			 ${MAKE_DOC_SOURCES}
 		VERBATIM
-		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/../docs_generator.py"
 		COMMENT "Generating docs..."
 		COMMAND_EXPAND_LISTS
