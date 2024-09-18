@@ -191,13 +191,6 @@ list(APPEND GODOT_C_FLAGS
 			>
 		>
 
-		$<$<STREQUAL:${GODOT_SYMBOLS_VISIBILITY},VISIBLE>:
-			-fvisibility=default
-		>
-		$<$<STREQUAL:${GODOT_SYMBOLS_VISIBILITY},HIDDEN>:
-			-fvisibility=hidden
-		>
-
 		$<$<STREQUAL:${GODOT_OPTIMIZE},AUTO>:
 			$<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:
 				$<${DEFAULT_OPTIMIZATION}:
@@ -260,13 +253,6 @@ list(APPEND GODOT_LINK_FLAGS
 		$<$<STREQUAL:${GODOT_OPTIMIZE},SIZE>:/OPT:REF>
 	>
 	$<$<NOT:${compiler_is_msvc}>:
-		$<$<STREQUAL:${GODOT_SYMBOLS_VISIBILITY},VISIBLE>:
-			-fvisibility=default
-		>
-		$<$<STREQUAL:${GODOT_SYMBOLS_VISIBILITY},HIDDEN>:
-			-fvisibility=hidden
-		>
-
 		$<$<NOT:${GODOT_DEBUG_SYMBOLS_ENABLED}>:
 			$<$<CXX_COMPILER_ID:AppleClang>: # SCons: not is_vanilla_clang(env)
 				"-Wl,-S"
