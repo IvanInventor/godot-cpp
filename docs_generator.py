@@ -2,7 +2,7 @@ import hashlib
 import zlib
 
 
-def make_doc(dst, source, compression=zlib.Z_BEST_COMPRESSION):
+def make_doc(dst, source, compression_str="Z_BEST_COMPRESSION"):
     g = open(dst, "w", encoding="utf-8")
     buf = ""
     docbegin = ""
@@ -17,7 +17,7 @@ def make_doc(dst, source, compression=zlib.Z_BEST_COMPRESSION):
     buf = (docbegin + buf + docend).encode("utf-8")
     decomp_size = len(buf)
 
-    buf = zlib.compress(buf, compression)
+    buf = zlib.compress(buf, getattr(zlib, compression_str))
 
     g.write("/* THIS FILE IS GENERATED DO NOT EDIT */\n")
     g.write("\n")
@@ -48,4 +48,4 @@ def make_doc(dst, source, compression=zlib.Z_BEST_COMPRESSION):
 if __name__ == "__main__":
     import sys
 
-    make_doc(sys.argv[2], sys.argv[3:], compression=getattr(zlib, sys.argv[1]))
+    make_doc(sys.argv[2], sys.argv[3:], compression_str=sys.argv[1])

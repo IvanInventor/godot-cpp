@@ -10,6 +10,7 @@ from SCons.Tool import Tool
 from SCons.Variables import BoolVariable, EnumVariable, PathVariable
 from SCons.Variables.BoolVariable import _text2bool
 
+import docs_generator
 from binding_generator import scons_emit_files, scons_generate_bindings
 
 
@@ -338,9 +339,8 @@ def options(opts, env):
 
 
 def make_doc_source(target, source, env):
-    import docs_generator
-
-    docs_generator.make_doc(str(target[0]), [str(src) for src in source])
+    compression = env.get("compression", "Z_BEST_COMPRESSION")
+    docs_generator.make_doc(str(target[0]), [str(src) for src in source], compression)
 
 
 def generate(env):
