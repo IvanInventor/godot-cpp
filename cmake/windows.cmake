@@ -1,4 +1,4 @@
-set(GODOT_ARCH "x86_64" CACHE STRING "Target architecture (x86_64, arm64, arm32, x86_32, CUSTOM)")
+set(GODOT_ARCH "x86_64" CACHE STRING "Target architecture (x86_64, arm64, arm32, x86_32, custom)")
 
 option(GODOT_USE_STATIC_CPP "Link MinGW/MSVC C++ runtime libraries statically" ON)
 

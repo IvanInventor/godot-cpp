@@ -1,6 +1,6 @@
 message(WARNING "IOS configuration is not tested and may not work.")
 
-set(GODOT_ARCH "universal" CACHE STRING "Target architecture (universal, arm64, x86_64, CUSTOM)")
+set(GODOT_ARCH "universal" CACHE STRING "Target architecture (universal, arm64, x86_64, custom)")
 
 set(GODOT_IOS_MIN_VERSION "12.0" CACHE STRING "Target minimum iphoneos/iphonesimulator version")
 
@@ -59,4 +59,3 @@ list(APPEND GODOT_LINK_FLAGS
 		"SHELL:-arch ${GODOT_ARCH}"
 	>
 )
-

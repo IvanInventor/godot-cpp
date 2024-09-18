@@ -9,26 +9,26 @@ if("${CMAKE_BUILD_TYPE}" STREQUAL "")
 	set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
-set(GODOT_TARGET "TEMPLATE_DEBUG" CACHE STRING "Target platform (EDITOR, TEMPLATE_DEBUG, TEMPLATE_RELEASE)")
+set(GODOT_TARGET "template_debug" CACHE STRING "Target platform (editor, template_debug, template_release)")
 
 # Auto-detect platform
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
-	set(DEFAULT_GODOT_PLATFORM "LINUX")
+	set(DEFAULT_GODOT_PLATFORM "linux")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-	set(DEFAULT_GODOT_PLATFORM "WINDOWS")
+	set(DEFAULT_GODOT_PLATFORM "windows")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
-	set(DEFAULT_GODOT_PLATFORM "MACOS")
+	set(DEFAULT_GODOT_PLATFORM "macos")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "iOS")
-	set(DEFAULT_GODOT_PLATFORM "IOS")
+	set(DEFAULT_GODOT_PLATFORM "ios")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Emscripten") # Set by providing Emscripten toolchain
-	set(DEFAULT_GODOT_PLATFORM "WEB")
+	set(DEFAULT_GODOT_PLATFORM "web")
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Android") # Set by providing Android toolchain
-	set(DEFAULT_GODOT_PLATFORM "ANDROID")
+	set(DEFAULT_GODOT_PLATFORM "android")
 else()
 	set(DEFAULT_GODOT_PLATFORM "NOTFOUND")
 endif()
 
-set(GODOT_PLATFORM "${DEFAULT_GODOT_PLATFORM}" CACHE STRING "[Auto-detected] Target platform (LINUX, MACOS, WINDOWS, ANDROID, IOS, WEB)")
+set(GODOT_PLATFORM "${DEFAULT_GODOT_PLATFORM}" CACHE STRING "[Auto-detected] Target platform (linux, macos, windows, android, ios, web)")
 
 if("${GODOT_PLATFORM}" STREQUAL "NOTFOUND")
        message(FATAL_ERROR "Could not auto-detect platform for \"${CMAKE_SYSTEM_NAME}\" automatically, please specify with -DGODOT_PLATFORM=<platform>")
@@ -40,11 +40,11 @@ set(GODOT_GDEXTENSION_DIR "${CMAKE_CURRENT_SOURCE_DIR}/gdextension" CACHE FILEPA
 
 set(GODOT_CUSTOM_API_FILE "${GODOT_GDEXTENSION_DIR}/extension_api.json" CACHE FILEPATH "Path to GDExtension API JSON file")
 
-set(GODOT_PRECISION "SINGLE" CACHE STRING "Floating-point precision level (SINGLE, DOUBLE)")
+set(GODOT_PRECISION "single" CACHE STRING "Floating-point precision level (single, double)")
 
-set(GODOT_OPTIMIZE "AUTO" CACHE STRING "The desired optimization flags (NONE, CUSTOM, DEBUG, SPEED, SPEED_TRACE, SIZE)")
+set(GODOT_OPTIMIZE "auto" CACHE STRING "The desired optimization flags (none, custom, debug, speed, speed_trace, size)")
 
-set(GODOT_SYMBOLS_VISIBILITY "AUTO" CACHE STRING "Symbols visibility on GNU platforms (AUTO, VISIBLE, HIDDEN)")
+set(GODOT_SYMBOLS_VISIBILITY "hidden" CACHE STRING "Symbols visibility on GNU platforms (default, visible, hidden)")
 
 set(GODOT_BUILD_PROFILE "" CACHE FILEPATH "Path to a file containing a feature build profile")
 
@@ -54,7 +54,7 @@ option(GODOT_DEV_BUILD "Developer build with dev-only debugging code" OFF)
 option(GODOT_DEBUG_SYMBOLS "Force build with debugging symbols" OFF)
 
 set(DEFAULT_GODOT_USE_HOT_RELOAD ON)
-if("${GODOT_TARGET}" STREQUAL "TEMPLATE_RELEASE")
+if("${GODOT_TARGET}" STREQUAL "template_release")
 	set(DEFAULT_GODOT_USE_HOT_RELOAD OFF)
 endif()
 option(GODOT_USE_HOT_RELOAD "Enable the extra accounting required to support hot reload" ${DEFAULT_GODOT_USE_HOT_RELOAD})
@@ -92,18 +92,18 @@ if(${GODOT_DEV_BUILD})
 	string(APPEND LIBRARY_SUFFIX ".dev")
 endif()
 
-if("${GODOT_PRECISION}" STREQUAL "DOUBLE")
+if("${GODOT_PRECISION}" STREQUAL "double")
 	string(APPEND LIBRARY_SUFFIX ".double")
 endif()
 
 # Workaround of $<CONFIG> expanding to "" when default build set
 set(CONFIG "$<IF:$<STREQUAL:,$<CONFIG>>,${CMAKE_BUILD_TYPE},$<CONFIG>>")
 
-string(TOLOWER ".${GODOT_PLATFORM}.${GODOT_TARGET}" platform_target)
-string(PREPEND LIBRARY_SUFFIX ${platform_target})
+set(_platform_target ".${GODOT_PLATFORM}.${GODOT_TARGET}")
+string(PREPEND LIBRARY_SUFFIX ${_platform_target})
 
 # Default optimization levels if GODOT_OPTIMIZE=AUTO, for multi-config support
-set(DEFAULT_OPTIMIZATION_DEBUG_FEATURES "$<OR:$<STREQUAL:${GODOT_TARGET},EDITOR>,$<STREQUAL:${GODOT_TARGET},TEMPLATE_DEBUG>>")
+set(DEFAULT_OPTIMIZATION_DEBUG_FEATURES "$<OR:$<STREQUAL:${GODOT_TARGET},editor>,$<STREQUAL:${GODOT_TARGET},template_debug>>")
 set(DEFAULT_OPTIMIZATION "$<NOT:${DEFAULT_OPTIMIZATION_DEBUG_FEATURES}>")
 
 set(GODOT_DEBUG_SYMBOLS_ENABLED "$<OR:$<BOOL:${GODOT_DEBUG_SYMBOLS}>,$<IN_LIST:${CONFIG},${GODOT_CONFIGS_WITH_DEBUG}>>")
@@ -123,13 +123,13 @@ list(APPEND GODOT_DEFINITIONS
 		>
 	>
 
-	$<$<STREQUAL:${GODOT_PRECISION},DOUBLE>:
+	$<$<STREQUAL:${GODOT_PRECISION},double>:
 		REAL_T_IS_DOUBLE
 	>
 	$<$<BOOL:${GODOT_USE_HOT_RELOAD}>:
 		HOT_RELOAD_ENABLED
 	>
-	$<$<STREQUAL:${GODOT_TARGET},EDITOR>:
+	$<$<STREQUAL:${GODOT_TARGET},editor>:
 		TOOLS_ENABLED
 	>
 
@@ -140,7 +140,7 @@ list(APPEND GODOT_DEFINITIONS
 		NDEBUG
 	>
 
-	$<$<NOT:$<STREQUAL:${GODOT_TARGET},TEMPLATE_RELEASE>>:
+	$<$<NOT:$<STREQUAL:${GODOT_TARGET},template_release>>:
 		DEBUG_ENABLED
 		DEBUG_METHODS_ENABLED
 	>
@@ -156,7 +156,7 @@ list(APPEND GODOT_C_FLAGS
 			/FS
 		>
 
-		$<$<STREQUAL:${GODOT_OPTIMIZE},AUTO>:
+		$<$<STREQUAL:${GODOT_OPTIMIZE},auto>:
 			$<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:
 				$<${DEFAULT_OPTIMIZATION}:
 					/O2
@@ -172,11 +172,11 @@ list(APPEND GODOT_C_FLAGS
 				/Od
 			>
 		>
-		$<$<STREQUAL:${GODOT_OPTIMIZE},SPEED>:/O2>
-		$<$<STREQUAL:${GODOT_OPTIMIZE},SPEED_TRACE>:/O2>
-		$<$<STREQUAL:${GODOT_OPTIMIZE},SIZE>:/O1>
-		$<$<STREQUAL:${GODOT_OPTIMIZE},DEBUG>:/Od>
-		$<$<STREQUAL:${GODOT_OPTIMIZE},NONE>:/Od>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},speed>:/O2>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},speed_trace>:/O2>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},size>:/O1>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},debug>:/Od>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},none>:/Od>
 
 	>
 	$<$<NOT:${compiler_is_msvc}>:
@@ -191,7 +191,7 @@ list(APPEND GODOT_C_FLAGS
 			>
 		>
 
-		$<$<STREQUAL:${GODOT_OPTIMIZE},AUTO>:
+		$<$<STREQUAL:${GODOT_OPTIMIZE},auto>:
 			$<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:
 				$<${DEFAULT_OPTIMIZATION}:
 					-O3
@@ -207,11 +207,11 @@ list(APPEND GODOT_C_FLAGS
 				-Og
 			>
 		>
-		$<$<STREQUAL:${GODOT_OPTIMIZE},SPEED>:-O3>
-		$<$<STREQUAL:${GODOT_OPTIMIZE},SPEED_TRACE>:-O2>
-		$<$<STREQUAL:${GODOT_OPTIMIZE},SIZE>:-Os>
-		$<$<STREQUAL:${GODOT_OPTIMIZE},DEBUG>:-Og>
-		$<$<STREQUAL:${GODOT_OPTIMIZE},NONE>:-O0>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},speed>:-O3>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},speed_trace>:-O2>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},size>:-Os>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},debug>:-Og>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},none>:-O0>
 	>
 )
 
@@ -234,7 +234,7 @@ list(APPEND GODOT_LINK_FLAGS
 			/DEBUG:FULL
 		>
 
-		$<$<STREQUAL:${GODOT_OPTIMIZE},AUTO>:
+		$<$<STREQUAL:${GODOT_OPTIMIZE},auto>:
 		$<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:
 				$<${DEFAULT_OPTIMIZATION}:
 					/OPT:REF
@@ -248,9 +248,9 @@ list(APPEND GODOT_LINK_FLAGS
 				/OPT:REF
 			>
 		>
-		$<$<STREQUAL:${GODOT_OPTIMIZE},SPEED>:/OPT:REF>
-		$<$<STREQUAL:${GODOT_OPTIMIZE},SPEED_TRACE>:/OPT:REF /OPT:NOICF>
-		$<$<STREQUAL:${GODOT_OPTIMIZE},SIZE>:/OPT:REF>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},speed>:/OPT:REF>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},speed_trace>:/OPT:REF /OPT:NOICF>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},size>:/OPT:REF>
 	>
 	$<$<NOT:${compiler_is_msvc}>:
 		$<$<NOT:${GODOT_DEBUG_SYMBOLS_ENABLED}>:
@@ -267,24 +267,10 @@ list(APPEND GODOT_LINK_FLAGS
 )
 
 # Platform-specific options
-if("${GODOT_PLATFORM}" STREQUAL "LINUX")
-	include(linux)
-elseif("${GODOT_PLATFORM}" STREQUAL "MACOS")
-	include(macos)
-elseif("${GODOT_PLATFORM}" STREQUAL "WINDOWS")
-	include(windows)
-elseif("${GODOT_PLATFORM}" STREQUAL "ANDROID")
-	include(android)
-elseif("${GODOT_PLATFORM}" STREQUAL "IOS")
-	include(ios)
-elseif("${GODOT_PLATFORM}" STREQUAL "WEB")
-	include(web)
-else()
-	message(FATAL_ERROR "Platform not supported: ${GODOT_PLATFORM}")
-endif()
+include(${GODOT_PLATFORM})
 
 # Mac/IOS uses .framework directory structure and don't need arch suffix
-if((NOT "${GODOT_PLATFORM}" STREQUAL "MACOS") AND (NOT "${GODOT_PLATFORM}" STREQUAL "IOS"))
+if((NOT "${GODOT_PLATFORM}" STREQUAL "macos") AND (NOT "${GODOT_PLATFORM}" STREQUAL "ios"))
 	string(APPEND LIBRARY_SUFFIX ".${GODOT_ARCH}")
 endif()
 

@@ -1,4 +1,4 @@
-set(GODOT_ARCH "x86_64" CACHE STRING "Target architecture (x86_32, x86_64, arm64, rv64, CUSTOM)")
+set(GODOT_ARCH "x86_64" CACHE STRING "Target architecture (x86_32, x86_64, arm64, rv64, custom)")
 
 string(REGEX MATCH "32$|64$" DEFAULT_GODOT_BITS "${GODOT_ARCH}")
 set(GODOT_BITS "${DEFAULT_GODOT_BITS}" CACHE STRING "Architecture bits. Needs to be set manually for custom architecture")
@@ -56,4 +56,3 @@ list(APPEND GODOT_LINK_FLAGS
 list(APPEND GODOT_COMPILE_WARNING_FLAGS
 	-Wwrite-strings
 )
-

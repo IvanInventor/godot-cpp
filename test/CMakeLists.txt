@@ -16,7 +16,7 @@ file(GLOB_RECURSE HEADERS CONFIGURE_DEPENDS src/*.h**)
 
 get_target_property(LIBRARY_SUFFIX godot-cpp LIBRARY_SUFFIX)
 
-if("${GODOT_TARGET}" STREQUAL "EDITOR" OR "${GODOT_TARGET}" STREQUAL "TEMPLATE_DEBUG")
+if("${GODOT_TARGET}" STREQUAL "editor" OR "${GODOT_TARGET}" STREQUAL "template_debug")
 	set(DOC_GEN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/gen/doc_data.gen.cpp")
 	file(GLOB_RECURSE DOC_FILES CONFIGURE_DEPENDS doc_classes/*.xml)
 
@@ -29,7 +29,7 @@ if("${GODOT_TARGET}" STREQUAL "EDITOR" OR "${GODOT_TARGET}" STREQUAL "TEMPLATE_D
 endif()
 
 # Define our godot-cpp library
-if("${GODOT_PLATFORM}" STREQUAL "WEB")
+if("${GODOT_PLATFORM}" STREQUAL "web")
 	# wasm libraries loaded with dlopen() are created like this in cmake
 	add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
 	set_target_properties(${PROJECT_NAME}
@@ -37,7 +37,7 @@ if("${GODOT_PLATFORM}" STREQUAL "WEB")
 			SUFFIX ".wasm"
 			OUTPUT_NAME "${PROJECT_NAME}${LIBRARY_SUFFIX}"
 	)
-elseif("${GODOT_PLATFORM}" STREQUAL "MACOS")
+elseif("${GODOT_PLATFORM}" STREQUAL "macos")
 	add_library(${PROJECT_NAME} SHARED ${SOURCES} ${HEADERS})
 	set(OUTPUT_NAME "lib${PROJECT_NAME}${LIBRARY_SUFFIX}")
 	set_target_properties(${PROJECT_NAME} PROPERTIES
@@ -58,7 +58,7 @@ elseif("${GODOT_PLATFORM}" STREQUAL "MACOS")
 	endif()
 
 # TODO: IOS configuration
-#elseif("${GODOT_PLATFORM}" STREQUAL "IOS")
+#elseif("${GODOT_PLATFORM}" STREQUAL "ios")
 else()
 	add_library(${PROJECT_NAME} SHARED ${SOURCES} ${HEADERS})
 	set_target_properties(${PROJECT_NAME} PROPERTIES

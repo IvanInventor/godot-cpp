@@ -86,7 +86,6 @@ execute_process(COMMAND "${Python3_EXECUTABLE}" "-c" "import binding_generator; 
 	OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-string(TOLOWER ${GODOT_PRECISION} GODOT_PRECISION_ARG)
 if(GODOT_GENERATE_TEMPLATE_GET_NODE)
 	set(GENERATE_BINDING_PARAMETERS "True")
 else()
@@ -94,7 +93,7 @@ else()
 endif()
 
 add_custom_command(OUTPUT ${GENERATED_FILES_LIST}
-	COMMAND "${Python3_EXECUTABLE}" "-c" "import binding_generator; binding_generator.generate_bindings(\"${GODOT_CUSTOM_API_FILE}\", \"${GENERATE_BINDING_PARAMETERS}\", \"${GODOT_BITS}\", \"${GODOT_PRECISION_ARG}\", \"${CMAKE_CURRENT_BINARY_DIR}\")"
+	COMMAND "${Python3_EXECUTABLE}" "-c" "import binding_generator; binding_generator.generate_bindings(\"${GODOT_CUSTOM_API_FILE}\", \"${GENERATE_BINDING_PARAMETERS}\", \"${GODOT_BITS}\", \"${GODOT_PRECISION}\", \"${CMAKE_CURRENT_BINARY_DIR}\")"
 		VERBATIM
 		WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		MAIN_DEPENDENCY ${GODOT_CUSTOM_API_FILE}
