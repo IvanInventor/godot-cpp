@@ -13,6 +13,8 @@ list(APPEND GODOT_C_FLAGS
 	# -fPIC is controlled by POSITION_INDEPENDENT_CODE property
 
 	$<$<STREQUAL:${GODOT_ARCH},x86_64>:
+		# -m64 and -m32 are x86-specific already, but it doesn't hurt to
+		# be clear and also specify -march=x86-64. Similar with 32-bit.
 		-m64
 		-march=x86-64
 	>
@@ -30,6 +32,7 @@ list(APPEND GODOT_C_FLAGS
 
 list(APPEND GODOT_CXX_FLAGS
 	$<$<AND:$<BOOL:${GODOT_USE_HOT_RELOAD}>,${compiler_is_gnu}>:
+		# Required for extensions to truly unload.
 		-fno-gnu-unique
 	>
 )
