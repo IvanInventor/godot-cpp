@@ -109,11 +109,6 @@ add_library(${PROJECT_NAME}
 )
 add_library(godot::cpp ALIAS ${PROJECT_NAME})
 
-target_compile_features(${PROJECT_NAME}
-	PRIVATE
-		cxx_std_17
-)
-
 # Optionally mark headers as SYSTEM
 set(GODOT_SYSTEM_HEADERS_ATTRIBUTE "")
 if (GODOT_SYSTEM_HEADERS)
@@ -155,6 +150,7 @@ set_target_properties(${PROJECT_NAME}
 		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/bin"
 		OUTPUT_NAME "${PROJECT_NAME}${LIBRARY_SUFFIX}"
 )
+
 if(${GODOT_WARNING_AS_ERROR})
 	set_warning_as_error(${PROJECT_NAME})
 endif()
