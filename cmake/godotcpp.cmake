@@ -1,27 +1,72 @@
 # This file contains variables needed by all platforms
 
+# Helper functions
 macro(godot_clear_default_flags)
-# Default options (including multi-config)
-set(CMAKE_EXE_LINKER_FLAGS "")
-set(CMAKE_STATIC_LINKER_FLAGS "")
-set(CMAKE_SHARED_LINKER_FLAGS "")
-set(CMAKE_MODULE_LINKER_FLAGS "")
+	# Default options (including multi-config)
+	set(CMAKE_EXE_LINKER_FLAGS "")
+	set(CMAKE_EXE_LINKER_FLAGS_DEBUG "")
+	set(CMAKE_EXE_LINKER_FLAGS_RELEASE "")
+	set(CMAKE_EXE_LINKER_FLAGS_RELWITHDEBINFO "")
+	set(CMAKE_EXE_LINKER_FLAGS_MINSIZEREL "")
 
-set(CMAKE_C_FLAGS "")
-set(CMAKE_C_FLAGS_DEBUG "")
-set(CMAKE_C_FLAGS_RELEASE "")
-set(CMAKE_C_FLAGS_RELWITHDEBINFO "")
-set(CMAKE_C_FLAGS_MINSIZEREL "")
+	set(CMAKE_STATIC_LINKER_FLAGS "")
+	set(CMAKE_STATIC_LINKER_FLAGS_DEBUG "")
+	set(CMAKE_STATIC_LINKER_FLAGS_RELEASE "")
+	set(CMAKE_STATIC_LINKER_FLAGS_RELWITHDEBINFO "")
+	set(CMAKE_STATIC_LINKER_FLAGS_MINSIZEREL "")
 
-set(CMAKE_CXX_FLAGS "")
-set(CMAKE_CXX_FLAGS_DEBUG "")
-set(CMAKE_CXX_FLAGS_RELEASE "")
-set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "")
-set(CMAKE_CXX_FLAGS_MINSIZEREL "")
+	set(CMAKE_SHARED_LINKER_FLAGS "")
+	set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "")
+	set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "")
+	set(CMAKE_SHARED_LINKER_FLAGS_RELWITHDEBINFO "")
+	set(CMAKE_SHARED_LINKER_FLAGS_MINSIZEREL "")
 
-# (--sysroot= option removed to match SCons options, may return later)
-set(CMAKE_SYSROOT "")
+	set(CMAKE_MODULE_LINKER_FLAGS "")
+	set(CMAKE_MODULE_LINKER_FLAGS_DEBUG "")
+	set(CMAKE_MODULE_LINKER_FLAGS_RELEASE "")
+	set(CMAKE_MODULE_LINKER_FLAGS_RELWITHDEBINFO "")
+	set(CMAKE_MODULE_LINKER_FLAGS_MINSIZEREL "")
+
+	set(CMAKE_C_FLAGS "")
+	set(CMAKE_C_FLAGS_DEBUG "")
+	set(CMAKE_C_FLAGS_RELEASE "")
+	set(CMAKE_C_FLAGS_RELWITHDEBINFO "")
+	set(CMAKE_C_FLAGS_MINSIZEREL "")
+
+	set(CMAKE_CXX_FLAGS "")
+	set(CMAKE_CXX_FLAGS_DEBUG "")
+	set(CMAKE_CXX_FLAGS_RELEASE "")
+	set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "")
+	set(CMAKE_CXX_FLAGS_MINSIZEREL "")
+
+	# (--sysroot= option removed to match SCons options, may return later)
+	set(CMAKE_SYSROOT "")
+	# TODO: remove `--sysroot=` and default `--target=` for android config
 endmacro()
+
+function(godot_make_doc)
+	find_package(Python3 3.4 REQUIRED)
+	set(options)
+	set(oneValueArgs DESTINATION COMPRESSION)
+	set(multiValueArgs SOURCES)
+	cmake_parse_arguments(MAKE_DOC "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+	if("${MAKE_DOC_COMPRESSION}" STREQUAL "")
+		set(MAKE_DOC_COMPRESSION "Z_BEST_COMPRESSION")
+	endif()
+
+	add_custom_command(OUTPUT ${MAKE_DOC_DESTINATION}
+		COMMAND "${Python3_EXECUTABLE}"
+			"${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../docs_generator.py"
+			"${MAKE_DOC_COMPRESSION}"
+			"${MAKE_DOC_DESTINATION}"
+			 ${MAKE_DOC_SOURCES}
+		VERBATIM
+		DEPENDS "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/../docs_generator.py"
+		COMMENT "Generating docs..."
+		COMMAND_EXPAND_LISTS
+	)
+endfunction()
 
 ### Options
 
@@ -106,11 +151,64 @@ option(GODOT_THREADS "Enable threading support" ON)
 
 ###
 
-# Compiler warnings and compiler check generators
+# Common compiler options and compiler check generators
 include(${CMAKE_CURRENT_LIST_DIR}/common_compiler_flags.cmake)
 
-# Create the correct name (godot-cpp.platform.target)
+# Platform-specific options
+include(${CMAKE_CURRENT_LIST_DIR}/${GODOT_PLATFORM}.cmake)
+
+godot_clear_default_flags()
+
+# Configuration of build targets:
+    # - Editor or template
+    # - Debug features (DEBUG_ENABLED code)
+    # - Dev only code (DEV_ENABLED code)
+    # - Optimization level
+    # - Debug symbols for crash traces / debuggers
+    # Keep this configuration in sync with SConstruct in upstream Godot.
+list(APPEND GODOT_DEFINITIONS
+	$<$<BOOL:${GODOT_THREADS}>:
+		THREADS_ENABLED
+	>
+
+	$<$<BOOL:${GODOT_USE_HOT_RELOAD}>:
+		HOT_RELOAD_ENABLED
+	>
+
+	$<$<STREQUAL:${GODOT_TARGET},editor>:
+		TOOLS_ENABLED
+	>
+
+	$<$<NOT:$<STREQUAL:${GODOT_TARGET},template_release>>:
+		# DEBUG_ENABLED enables debugging *features* and debug-only code, which is intended
+		# to give *users* extra debugging information for their game development.
+		DEBUG_ENABLED
+		# In upstream Godot this is added in typedefs.h when DEBUG_ENABLED is set.
+		DEBUG_METHODS_ENABLED
+	>
+	$<$<BOOL:${GODOT_DEV_BUILD}>:
+        # DEV_ENABLED enables *engine developer* code which should only be compiled for those
+        # working on the engine itself.
+		DEV_ENABLED
+	>
+
+	$<$<NOT:$<BOOL:${GODOT_DEV_BUILD}>>:
+	    # Disable assert() for production targets (only used in thirdparty code).
+		NDEBUG
+	>
+
+	$<$<STREQUAL:${GODOT_PRECISION},double>:
+		REAL_T_IS_DOUBLE
+	>
+
+    # Allow detecting when building as a GDExtension.
+	GDEXTENSION
+)
+
+# Suffix
 # See more prefix appends in platform-specific configs
+string(PREPEND LIBRARY_SUFFIX ".${GODOT_PLATFORM}.${GODOT_TARGET}")
+
 if(${GODOT_DEV_BUILD})
 	string(APPEND LIBRARY_SUFFIX ".dev")
 endif()
@@ -118,176 +216,6 @@ endif()
 if("${GODOT_PRECISION}" STREQUAL "double")
 	string(APPEND LIBRARY_SUFFIX ".double")
 endif()
-
-# Workaround of $<CONFIG> expanding to "" when default build set
-set(CONFIG "$<IF:$<STREQUAL:,$<CONFIG>>,${CMAKE_BUILD_TYPE},$<CONFIG>>")
-
-set(_platform_target ".${GODOT_PLATFORM}.${GODOT_TARGET}")
-string(PREPEND LIBRARY_SUFFIX ${_platform_target})
-
-# Default optimization levels if GODOT_OPTIMIZE=AUTO, for multi-config support
-set(DEFAULT_OPTIMIZATION_DEBUG_FEATURES "$<OR:$<STREQUAL:${GODOT_TARGET},editor>,$<STREQUAL:${GODOT_TARGET},template_debug>>")
-set(DEFAULT_OPTIMIZATION "$<NOT:${DEFAULT_OPTIMIZATION_DEBUG_FEATURES}>")
-
-set(GODOT_DEBUG_SYMBOLS_ENABLED "$<OR:$<BOOL:${GODOT_DEBUG_SYMBOLS}>,$<IN_LIST:${CONFIG},${GODOT_CONFIGS_WITH_DEBUG}>>")
-
-
-godot_clear_default_flags()
-
-list(APPEND GODOT_DEFINITIONS
-	GDEXTENSION
-
-	$<${compiler_is_msvc}:
-		$<$<BOOL:${GODOT_DISABLE_EXCEPTIONS}>:
-			_HAS_EXCEPTIONS=0
-		>
-	>
-
-	$<$<STREQUAL:${GODOT_PRECISION},double>:
-		REAL_T_IS_DOUBLE
-	>
-	$<$<BOOL:${GODOT_USE_HOT_RELOAD}>:
-		HOT_RELOAD_ENABLED
-	>
-	$<$<STREQUAL:${GODOT_TARGET},editor>:
-		TOOLS_ENABLED
-	>
-
-	$<$<BOOL:${GODOT_DEV_BUILD}>:
-		DEV_ENABLED
-	>
-	$<$<NOT:$<BOOL:${GODOT_DEV_BUILD}>>:
-		NDEBUG
-	>
-
-	$<$<NOT:$<STREQUAL:${GODOT_TARGET},template_release>>:
-		DEBUG_ENABLED
-		DEBUG_METHODS_ENABLED
-	>
-	$<$<BOOL:${GODOT_THREADS}>:
-		THREADS_ENABLED
-	>
-)
-
-list(APPEND GODOT_C_FLAGS
-	$<${compiler_is_msvc}:
-		$<${GODOT_DEBUG_SYMBOLS_ENABLED}:
-			/Zi
-			/FS
-		>
-
-		$<$<STREQUAL:${GODOT_OPTIMIZE},auto>:
-			$<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:
-				$<${DEFAULT_OPTIMIZATION}:
-					/O2
-				>
-				$<${DEFAULT_OPTIMIZATION_DEBUG_FEATURES}:
-					/O2
-				>
-			>
-			$<$<CONFIG:MinSizeRel>:
-				/O1
-			>
-			$<$<OR:$<CONFIG:Debug>,$<CONFIG:>>:
-				/Od
-			>
-		>
-		$<$<STREQUAL:${GODOT_OPTIMIZE},speed>:/O2>
-		$<$<STREQUAL:${GODOT_OPTIMIZE},speed_trace>:/O2>
-		$<$<STREQUAL:${GODOT_OPTIMIZE},size>:/O1>
-		$<$<STREQUAL:${GODOT_OPTIMIZE},debug>:/Od>
-		$<$<STREQUAL:${GODOT_OPTIMIZE},none>:/Od>
-
-	>
-	$<$<NOT:${compiler_is_msvc}>:
-		$<${GODOT_DEBUG_SYMBOLS_ENABLED}:
-			-gdwarf-4
-
-			$<$<BOOL:${GODOT_DEV_BUILD}>:
-				-g3
-			>
-			$<$<NOT:$<BOOL:${GODOT_DEV_BUILD}>>:
-				-g2
-			>
-		>
-
-		$<$<STREQUAL:${GODOT_OPTIMIZE},auto>:
-			$<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:
-				$<${DEFAULT_OPTIMIZATION}:
-					-O3
-				>
-				$<${DEFAULT_OPTIMIZATION_DEBUG_FEATURES}:
-					-O2
-				>
-			>
-			$<$<CONFIG:MinSizeRel>:
-				-Os
-			>
-			$<$<OR:$<CONFIG:Debug>,$<CONFIG:>>:
-				-Og
-			>
-		>
-		$<$<STREQUAL:${GODOT_OPTIMIZE},speed>:-O3>
-		$<$<STREQUAL:${GODOT_OPTIMIZE},speed_trace>:-O2>
-		$<$<STREQUAL:${GODOT_OPTIMIZE},size>:-Os>
-		$<$<STREQUAL:${GODOT_OPTIMIZE},debug>:-Og>
-		$<$<STREQUAL:${GODOT_OPTIMIZE},none>:-O0>
-	>
-)
-
-list(APPEND GODOT_CXX_FLAGS
-	$<${compiler_is_msvc}:
-		$<$<NOT:$<BOOL:${GODOT_DISABLE_EXCEPTIONS}>>:
-			/EHsc
-		>
-	>
-	$<$<NOT:${compiler_is_msvc}>:
-		$<$<BOOL:${GODOT_DISABLE_EXCEPTIONS}>:
-			-fno-exceptions
-		>
-	>
-)
-
-list(APPEND GODOT_LINK_FLAGS
-	$<${compiler_is_msvc}:
-		$<${GODOT_DEBUG_SYMBOLS_ENABLED}:
-			/DEBUG:FULL
-		>
-
-		$<$<STREQUAL:${GODOT_OPTIMIZE},auto>:
-		$<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:
-				$<${DEFAULT_OPTIMIZATION}:
-					/OPT:REF
-				>
-				$<${DEFAULT_OPTIMIZATION_DEBUG_FEATURES}:
-					/OPT:REF
-					/OPT:NOICF
-				>
-			>
-			$<$<CONFIG:MinSizeRel>:
-				/OPT:REF
-			>
-		>
-		$<$<STREQUAL:${GODOT_OPTIMIZE},speed>:/OPT:REF>
-		$<$<STREQUAL:${GODOT_OPTIMIZE},speed_trace>:/OPT:REF /OPT:NOICF>
-		$<$<STREQUAL:${GODOT_OPTIMIZE},size>:/OPT:REF>
-	>
-	$<$<NOT:${compiler_is_msvc}>:
-		$<$<NOT:${GODOT_DEBUG_SYMBOLS_ENABLED}>:
-			$<$<CXX_COMPILER_ID:AppleClang>: # SCons: not is_vanilla_clang(env)
-				"-Wl,-S"
-				"-Wl,-x"
-				"-Wl,-dead_strip"
-			>
-			$<$<NOT:$<CXX_COMPILER_ID:AppleClang>>:
-				"-s"
-			>
-		>
-	>
-)
-
-# Platform-specific options
-include(${CMAKE_CURRENT_LIST_DIR}/${GODOT_PLATFORM}.cmake)
 
 # Mac/IOS uses .framework directory structure and don't need arch suffix
 if((NOT "${GODOT_PLATFORM}" STREQUAL "macos") AND (NOT "${GODOT_PLATFORM}" STREQUAL "ios"))
@@ -303,33 +231,9 @@ if(NOT ${GODOT_THREADS})
 endif()
 
 
-function(godot_make_doc)
-	find_package(Python3 3.4 REQUIRED)
-	set(options)
-	set(oneValueArgs DESTINATION COMPRESSION)
-	set(multiValueArgs SOURCES)
-	cmake_parse_arguments(MAKE_DOC "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-
-	if("${MAKE_DOC_COMPRESSION}" STREQUAL "")
-		set(MAKE_DOC_COMPRESSION "Z_BEST_COMPRESSION")
-	endif()
-
-	add_custom_command(OUTPUT ${MAKE_DOC_DESTINATION}
-		COMMAND "${Python3_EXECUTABLE}"
-			"${CMAKE_CURRENT_SOURCE_DIR}/../docs_generator.py"
-			"${MAKE_DOC_COMPRESSION}"
-			"${MAKE_DOC_DESTINATION}"
-			 ${MAKE_DOC_SOURCES}
-		VERBATIM
-		DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/../docs_generator.py"
-		COMMENT "Generating docs..."
-		COMMAND_EXPAND_LISTS
-	)
-endfunction()
-
 # Write all flags to file for cmake configuration debug (CMake 3.19+)
 #file(GENERATE OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/flags-${CONFIG}.txt"
 #	CONTENT
 #	"C_FLAGS '${GODOT_C_FLAGS}'\nCXX_FLAGS '${GODOT_CXX_FLAGS}'\nLINK_FLAGS '${GODOT_LINK_FLAGS}'\nCOMPILE_WARNING_FLAGS '${GODOT_COMPILE_WARNING_FLAGS}'\nDEFINITIONS '${GODOT_DEFINITIONS}'"
-#	GODOT_TARGET ${PROJECT_NAME}
+#	TARGET ${PROJECT_NAME}
 #)

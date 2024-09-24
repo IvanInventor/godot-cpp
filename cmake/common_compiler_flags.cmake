@@ -11,6 +11,140 @@ set(compiler_greater_than_or_equal_v11 "$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_V
 set(compiler_less_than_v11 "$<VERSION_LESS:$<CXX_COMPILER_VERSION>,11>")
 set(compiler_greater_than_or_equal_v12 "$<VERSION_GREATER_EQUAL:$<CXX_COMPILER_VERSION>,12>")
 
+# Workaround of $<CONFIG> expanding to "" when default build set
+set(CONFIG "$<IF:$<STREQUAL:,$<CONFIG>>,${CMAKE_BUILD_TYPE},$<CONFIG>>")
+
+# Default optimization levels if GODOT_OPTIMIZE=AUTO, for multi-config support
+set(DEFAULT_OPTIMIZATION_DEBUG_FEATURES "$<OR:$<STREQUAL:${GODOT_TARGET},editor>,$<STREQUAL:${GODOT_TARGET},template_debug>>")
+set(DEFAULT_OPTIMIZATION "$<NOT:${DEFAULT_OPTIMIZATION_DEBUG_FEATURES}>")
+
+set(GODOT_DEBUG_SYMBOLS_ENABLED "$<OR:$<BOOL:${GODOT_DEBUG_SYMBOLS}>,$<IN_LIST:${CONFIG},${GODOT_CONFIGS_WITH_DEBUG}>>")
+
+list(APPEND GODOT_DEFINITIONS
+	$<${compiler_is_msvc}:
+		$<$<BOOL:${GODOT_DISABLE_EXCEPTIONS}>:
+			_HAS_EXCEPTIONS=0
+		>
+	>
+)
+
+list(APPEND GODOT_C_FLAGS
+	$<${compiler_is_msvc}:
+		$<${GODOT_DEBUG_SYMBOLS_ENABLED}:
+			/Zi
+			/FS
+		>
+
+		$<$<STREQUAL:${GODOT_OPTIMIZE},auto>:
+			$<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:
+				$<${DEFAULT_OPTIMIZATION}:
+					/O2
+				>
+				$<${DEFAULT_OPTIMIZATION_DEBUG_FEATURES}:
+					/O2
+				>
+			>
+			$<$<CONFIG:MinSizeRel>:
+				/O1
+			>
+			$<$<OR:$<CONFIG:Debug>,$<CONFIG:>>:
+				/Od
+			>
+		>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},speed>:/O2>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},speed_trace>:/O2>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},size>:/O1>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},debug>:/Od>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},none>:/Od>
+
+	>
+	$<$<NOT:${compiler_is_msvc}>:
+		$<${GODOT_DEBUG_SYMBOLS_ENABLED}:
+			-gdwarf-4
+
+			$<$<BOOL:${GODOT_DEV_BUILD}>:
+				-g3
+			>
+			$<$<NOT:$<BOOL:${GODOT_DEV_BUILD}>>:
+				-g2
+			>
+		>
+
+		$<$<STREQUAL:${GODOT_OPTIMIZE},auto>:
+			$<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:
+				$<${DEFAULT_OPTIMIZATION}:
+					-O3
+				>
+				$<${DEFAULT_OPTIMIZATION_DEBUG_FEATURES}:
+					-O2
+				>
+			>
+			$<$<CONFIG:MinSizeRel>:
+				-Os
+			>
+			$<$<OR:$<CONFIG:Debug>,$<CONFIG:>>:
+				-Og
+			>
+		>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},speed>:-O3>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},speed_trace>:-O2>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},size>:-Os>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},debug>:-Og>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},none>:-O0>
+	>
+)
+
+list(APPEND GODOT_CXX_FLAGS
+	$<${compiler_is_msvc}:
+		$<$<NOT:$<BOOL:${GODOT_DISABLE_EXCEPTIONS}>>:
+			/EHsc
+		>
+	>
+	$<$<NOT:${compiler_is_msvc}>:
+		$<$<BOOL:${GODOT_DISABLE_EXCEPTIONS}>:
+			-fno-exceptions
+		>
+	>
+)
+
+list(APPEND GODOT_LINK_FLAGS
+	$<${compiler_is_msvc}:
+		$<${GODOT_DEBUG_SYMBOLS_ENABLED}:
+			/DEBUG:FULL
+		>
+
+		$<$<STREQUAL:${GODOT_OPTIMIZE},auto>:
+		$<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:
+				$<${DEFAULT_OPTIMIZATION}:
+					/OPT:REF
+				>
+				$<${DEFAULT_OPTIMIZATION_DEBUG_FEATURES}:
+					/OPT:REF
+					/OPT:NOICF
+				>
+			>
+			$<$<CONFIG:MinSizeRel>:
+				/OPT:REF
+			>
+		>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},speed>:/OPT:REF>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},speed_trace>:/OPT:REF /OPT:NOICF>
+		$<$<STREQUAL:${GODOT_OPTIMIZE},size>:/OPT:REF>
+	>
+	$<$<NOT:${compiler_is_msvc}>:
+		$<$<NOT:${GODOT_DEBUG_SYMBOLS_ENABLED}>:
+			$<$<CXX_COMPILER_ID:AppleClang>: # SCons: not is_vanilla_clang(env)
+				"-Wl,-S"
+				"-Wl,-x"
+				"-Wl,-dead_strip"
+			>
+			$<$<NOT:$<CXX_COMPILER_ID:AppleClang>>:
+				"-s"
+			>
+		>
+	>
+)
+
 # These compiler options reflect what is in godot/SConstruct.
 list(APPEND GODOT_COMPILE_WARNING_FLAGS
     # MSVC only

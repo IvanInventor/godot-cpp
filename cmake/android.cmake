@@ -61,4 +61,8 @@ list(APPEND GODOT_LINK_FLAGS
 		--target=x86_64-linux-android${ANDROID_PLATFORM}
 		-march=x86-64
 	>
+
+	$<$<STREQUAL:${CMAKE_HOST_SYSTEM_NAME},Darwin>:
+		-shared
+	>
 )
