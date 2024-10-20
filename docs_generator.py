@@ -1,8 +1,10 @@
 import hashlib
+import os
 import zlib
 
 
 def make_doc(dst, source, compression_str="Z_BEST_COMPRESSION"):
+    os.makedirs(os.path.basename(dst), exist_ok=True)
     g = open(dst, "w", encoding="utf-8")
     buf = ""
     docbegin = ""
