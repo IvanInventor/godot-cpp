@@ -33,6 +33,14 @@ repos:
       - id: codespell
         additional_dependencies: [tomli]
 
+  - repo: https://github.com/cheshirekow/cmake-format-precommit
+    rev: v0.6.10
+    hooks:
+    - id: cmake-format
+      files: CMakeLists\.txt$|\.cmake$
+    - id: cmake-lint
+      files: CMakeLists\.txt$|\.cmake$
+
   - repo: local
     hooks:
       - id: copyright-headers
