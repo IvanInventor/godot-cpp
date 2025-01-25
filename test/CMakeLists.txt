@@ -1,94 +1,104 @@
-#[=======================================================================[.rst:
-Integration Testing
--------------------
+# Configuration can be used as a template for custom project, read comments
+cmake_minimum_required(VERSION 3.13)
+project(gdexample LANGUAGES CXX)
 
-The Test target used to validate changes in the GitHub CI.
-]=======================================================================]
+set(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo;MinSizeRel")
+set(GODOT_CPP_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../)	# path to godot-cpp repository
 
-message( STATUS "Testing Integration targets are enabled.")
+add_subdirectory(
+	${GODOT_CPP_PATH}
+	${CMAKE_CURRENT_BINARY_DIR}/godot-cpp 	# needed because godot-cpp is top directory
+)
 
-# Generate Doc Data
-file( GLOB_RECURSE DOC_XML
-    LIST_DIRECTORIES NO
-    CONFIGURE_DEPENDS
-    "${CMAKE_CURRENT_SOURCE_DIR}/doc_classes/*.xml" )
+# Get Sources
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS src/*.c**)
+file(GLOB_RECURSE HEADERS CONFIGURE_DEPENDS src/*.h**)
 
-set( DOC_DATA_SOURCE "${CMAKE_CURRENT_BINARY_DIR}/src/gen/doc_data.gen.cpp" )
-generate_doc_source( "${DOC_DATA_SOURCE}" "${DOC_XML}" )
+godot_clear_default_flags()
 
-foreach( TARGET_ALIAS template_debug template_release editor )
-    set( TARGET_NAME "godot-cpp.test.${TARGET_ALIAS}" )
-    set( LINK_TARGET "godot-cpp::${TARGET_ALIAS}" )
+get_target_property(LIBRARY_SUFFIX godot-cpp LIBRARY_SUFFIX)
 
-    add_library( ${TARGET_NAME} SHARED EXCLUDE_FROM_ALL )
+if("${GODOT_TARGET}" STREQUAL "editor" OR "${GODOT_TARGET}" STREQUAL "template_debug")
+	set(DOC_GEN_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src/gen/doc_data.gen.cpp")
+	file(GLOB_RECURSE DOC_FILES CONFIGURE_DEPENDS doc_classes/*.xml)
 
-    target_sources( ${TARGET_NAME}
-            PRIVATE
-            src/example.cpp
-            src/example.h
-            src/register_types.cpp
-            src/register_types.h
-            src/tests.h
-    )
+	godot_make_doc(
+		DESTINATION ${DOC_GEN_PATH}
+		SOURCES ${DOC_FILES}
+		COMPRESSION Z_BEST_COMPRESSION
+	)
+	list(APPEND SOURCES ${DOC_GEN_PATH})
+endif()
 
-    # conditionally add doc data to compile output
-    if( TARGET_ALIAS MATCHES "editor|template_debug" )
-        target_sources( ${TARGET_NAME} PRIVATE "${DOC_DATA_SOURCE}" )
-    endif(   )
+# Define our godot-cpp library
+if("${GODOT_PLATFORM}" STREQUAL "web")
+	# wasm libraries loaded with dlopen() are created like this in cmake
+	add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS})
+	set_target_properties(${PROJECT_NAME}
+		PROPERTIES
+			SUFFIX ".wasm"
+			OUTPUT_NAME "${PROJECT_NAME}${LIBRARY_SUFFIX}"
+	)
+elseif("${GODOT_PLATFORM}" STREQUAL "macos")
+	add_library(${PROJECT_NAME} SHARED ${SOURCES} ${HEADERS})
+	set(OUTPUT_NAME "lib${PROJECT_NAME}${LIBRARY_SUFFIX}")
+	set_target_properties(${PROJECT_NAME} PROPERTIES
+		FRAMEWORK TRUE
+		MACOSX_FRAMEWORK_IDENTIFIER "org.godotengine.lib${PROJECT_NAME}"
+		MACOSX_BUNDLE_BUNDLE_NAME "lib${PROJECT_NAME}${LIBRARY_SUFFIX}"
+		MACOSX_BUNDLE_SHORT_VERSION_STRING "1.0.0"
+		MACOS_BUNDLE_BUNDLE_VERSION "1.0.0"
 
-    target_link_libraries( ${TARGET_NAME} PRIVATE ${LINK_TARGET} )
+		OUTPUT_NAME "${OUTPUT_NAME}"
+	)
 
-    ### Get useful properties of the library
-    get_target_property( GODOT_PLATFORM ${LINK_TARGET} GODOT_PLATFORM   )
-    get_target_property( GODOT_TARGET   ${LINK_TARGET} GODOT_TARGET     )
-    get_target_property( GODOT_ARCH     ${LINK_TARGET} GODOT_ARCH       )
+	# Workaround of 'bin/***.framework/Resources' existing in godot-cpp repo by default'
+	set(RESOURCES_DIR "${CMAKE_CURRENT_SOURCE_DIR}/project/bin/${OUTPUT_NAME}.framework/Resources")
+	if(IS_DIRECTORY ${RESOURCES_DIR} AND NOT IS_SYMLINK ${RESOURCES_DIR})
+		message(STATUS "Removing '${RESOURCES_DIR}' to create symlink ...")
+		file(REMOVE_RECURSE ${RESOURCES_DIR})
+	endif()
 
-    set( OUTPUT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/project/bin/" )
-    set( DEV_TAG "$<$<BOOL:${GODOT_DEV_BUILD}>:.dev>" )
+# TODO: IOS configuration
+#elseif("${GODOT_PLATFORM}" STREQUAL "ios")
+else()
+	add_library(${PROJECT_NAME} SHARED ${SOURCES} ${HEADERS})
+	set_target_properties(${PROJECT_NAME} PROPERTIES
+		OUTPUT_NAME "${PROJECT_NAME}${LIBRARY_SUFFIX}"
+)
+endif()
 
-    set_target_properties( ${TARGET_NAME}
-            PROPERTIES
-            CXX_STANDARD 17
-            CXX_EXTENSIONS OFF
-            CXX_VISIBILITY_PRESET ${GODOT_SYMBOL_VISIBILITY}
+target_link_libraries(${PROJECT_NAME} PUBLIC godot-cpp)
 
-            POSITION_INDEPENDENT_CODE ON
-            BUILD_RPATH_USE_ORIGIN ON
+get_target_property(GODOT_C_FLAGS godot-cpp GODOT_C_FLAGS)
+get_target_property(GODOT_CXX_FLAGS godot-cpp GODOT_CXX_FLAGS)
+get_target_property(GODOT_COMPILE_WARNING_FLAGS godot-cpp GODOT_COMPILE_WARNING_FLAGS)
+target_compile_options(${PROJECT_NAME} PRIVATE
+	${GODOT_C_FLAGS}
+	${GODOT_CXX_FLAGS}
+	${GODOT_COMPILE_WARNING_FLAGS}
+)
 
-            # Try to ensure only static libraries are selected to be linked to.
-            LINK_SEARCH_START_STATIC ON
-            LINK_SEARCH_END_STATIC ON
+get_target_property(GODOT_LINK_FLAGS godot-cpp GODOT_LINK_FLAGS)
+target_link_options(${PROJECT_NAME} PRIVATE ${GODOT_LINK_FLAGS})
 
-            # NOTE: Wrapping the output variables inside a generator expression
-            # prevents msvc generator from adding addition Config Directories
-            LIBRARY_OUTPUT_DIRECTORY "$<1:${OUTPUT_DIR}>"
-            RUNTIME_OUTPUT_DIRECTORY "$<1:${OUTPUT_DIR}>"
-            PDB_OUTPUT_DIRECTORY     "$<1:${OUTPUT_DIR}>" #MSVC Only, ignored on other platforms
 
-            PREFIX "lib"
-            OUTPUT_NAME "gdexample.${GODOT_PLATFORM}.${GODOT_TARGET}${DEV_TAG}.${GODOT_ARCH}"
+get_target_property(LIBRARY_SUFFIX godot-cpp LIBRARY_SUFFIX)
+set_target_properties(${PROJECT_NAME}
+	PROPERTIES
+		PREFIX "lib"
+		LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/project/bin"
+		LIBRARY_OUTPUT_DIRECTORY_DEBUG "${CMAKE_CURRENT_SOURCE_DIR}/project/bin"
+		LIBRARY_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/project/bin"
+		LIBRARY_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_CURRENT_SOURCE_DIR}/project/bin"
+		LIBRARY_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_CURRENT_SOURCE_DIR}/project/bin"
+		RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/project/bin"
+		RUNTIME_OUTPUT_DIRECTORY_DEBUG "${CMAKE_CURRENT_SOURCE_DIR}/project/bin"
+		RUNTIME_OUTPUT_DIRECTORY_RELEASE "${CMAKE_CURRENT_SOURCE_DIR}/project/bin"
+		RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO "${CMAKE_CURRENT_SOURCE_DIR}/project/bin"
+		RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL "${CMAKE_CURRENT_SOURCE_DIR}/project/bin"
+)
 
-            # Some IDE's respect this property to logically group targets
-            FOLDER "godot-cpp"
-    )
-
-    # CMAKE_SYSTEM_NAME refers to the target system
-    if( CMAKE_SYSTEM_NAME STREQUAL Darwin )
-        get_target_property( OSX_ARCH ${LINK_TARGET} OSX_ARCHITECTURES )
-
-        set( OUTPUT_DIR "${OUTPUT_DIR}/libgdexample.macos.${TEST_TARGET}.framework")
-
-        set_target_properties( ${TARGET_NAME}
-                PROPERTIES
-                LIBRARY_OUTPUT_DIRECTORY "$<1:${OUTPUT_DIR}>"
-                RUNTIME_OUTPUT_DIRECTORY "$<1:${OUTPUT_DIR}>"
-
-                OUTPUT_NAME "gdexample.macos.${TARGET_ALIAS}${DEV_TAG}"
-                SUFFIX ""
-
-                #macos options
-                OSX_ARCHITECTURES "${OSX_ARCH}"
-        )
-    endif ()
-
-endforeach()
+if(${GODOT_WARNING_AS_ERROR})
+	set_warning_as_error(${PROJECT_NAME})
+endif()

@@ -12,7 +12,7 @@ from SCons.Variables.BoolVariable import _text2bool
 
 from binding_generator import _generate_bindings, _get_file_list, get_file_list
 from build_profile import generate_trimmed_api
-from doc_source_generator import scons_generate_doc_source
+import docs_generator
 
 
 def add_sources(sources, dir, extension):
@@ -378,6 +378,11 @@ def options(opts, env):
             tool.options(opts)
 
 
+def make_doc_source(target, source, env):
+    compression = env.get("compression", "Z_BEST_COMPRESSION")
+    docs_generator.make_doc(str(target[0]), [str(src) for src in source], compression)
+
+
 def generate(env):
     # Default num_jobs to local cpu count if not user specified.
     # SCons has a peculiarity where user-specified options won't be overridden
@@ -510,7 +515,7 @@ def generate(env):
     env.Append(
         BUILDERS={
             "GodotCPPBindings": Builder(action=Action(scons_generate_bindings, "$GENCOMSTR"), emitter=scons_emit_files),
-            "GodotCPPDocData": Builder(action=scons_generate_doc_source),
+            "GodotCPPDocData": Builder(action=make_doc_source),
         }
     )
     env.AddMethod(_godot_cpp, "GodotCPP")

@@ -78,7 +78,6 @@ def options(opts):
     opts.Add(BoolVariable("use_mingw", "Use the MinGW compiler instead of MSVC - only effective on Windows", False))
     opts.Add(BoolVariable("use_static_cpp", "Link MinGW/MSVC C++ runtime libraries statically", True))
     opts.Add(BoolVariable("silence_msvc", "Silence MSVC's cl/link stdout bloat, redirecting errors to stderr.", True))
-    opts.Add(BoolVariable("debug_crt", "Compile with MSVC's debug CRT (/MDd)", False))
     opts.Add(BoolVariable("use_llvm", "Use the LLVM compiler (MVSC or MinGW depending on the use_mingw flag)", False))
     opts.Add("mingw_prefix", "MinGW prefix", mingw)
 
@@ -118,14 +117,10 @@ def generate(env):
             env["CC"] = "clang-cl"
             env["CXX"] = "clang-cl"
 
-        if env["debug_crt"]:
-            # Always use dynamic runtime, static debug CRT breaks thread_local.
-            env.AppendUnique(CCFLAGS=["/MDd"])
+        if env["use_static_cpp"]:
+            env.Append(CCFLAGS=["/MT"])
         else:
-            if env["use_static_cpp"]:
-                env.AppendUnique(CCFLAGS=["/MT"])
-            else:
-                env.AppendUnique(CCFLAGS=["/MD"])
+            env.Append(CCFLAGS=["/MD"])
 
         if env["silence_msvc"] and not env.GetOption("clean"):
             silence_msvc(env)

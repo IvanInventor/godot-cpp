@@ -1,59 +1,48 @@
-#[=======================================================================[.rst:
-MacOS
------
+set(GODOT_ARCH "universal" CACHE STRING "Target architecture (universal, arm64, x86_64, custom)")
 
-This file contains functions for options and configuration for targeting the
-MacOS platform
+set(GODOT_MACOS_DEPLOYMENT_TARGET "default" CACHE STRING "")
 
-]=======================================================================]
-
-# Find Requirements
-IF(APPLE)
-    set( CMAKE_OSX_SYSROOT $ENV{SDKROOT} )
-    find_library( COCOA_LIBRARY REQUIRED
-        NAMES Cocoa
-        PATHS ${CMAKE_OSX_SYSROOT}/System/Library
-        PATH_SUFFIXES Frameworks
-        NO_DEFAULT_PATH)
-ENDIF (APPLE)
+if (${GODOT_ARCH} STREQUAL "universal")
+	set(DEFAULT_GODOT_BITS 64)
+else()
+	string(REGEX MATCH "32$|64$" DEFAULT_GODOT_BITS "${GODOT_ARCH}")
+endif()
+set(GODOT_BITS "${DEFAULT_GODOT_BITS}" CACHE STRING "Architecture bits. Needs to be set manually for custom architecture")
 
 
-function( macos_options )
-    # macos options here
-endfunction()
+list(APPEND GODOT_DEFINITIONS
+	MACOS_ENABLED
+	UNIX_ENABLED
+)
 
+list(APPEND GODOT_C_FLAGS
+	$<$<STREQUAL:${GODOT_ARCH},universal>:
+		"SHELL:-arch x86_64"
+		"SHELL:-arch arm64"
+	>
+	$<$<NOT:$<STREQUAL:${GODOT_ARCH},universal>>:
+		"SHELL:-arch ${GODOT_ARCH}"
+	>
 
-function( macos_generate )
+	$<$<NOT:$<STREQUAL:${GODOT_MACOS_DEPLOYMENT_TARGET},default>>:
+	-mmacosx-version-min=${GODOT_MACOS_DEPLOYMENT_TARGET}
+	>
+)
 
-    # OSX_ARCHITECTURES does not support generator expressions.
-    if( NOT GODOT_ARCH OR GODOT_ARCH STREQUAL universal )
-        set( OSX_ARCH "x86_64;arm64" )
-        set( SYSTEM_ARCH universal )
-    else()
-        set( OSX_ARCH ${GODOT_ARCH} )
-    endif()
+list(APPEND GODOT_LINK_FLAGS
+	-framework
+        Cocoa
+        -Wl,-undefined,dynamic_lookup
 
-    set_target_properties( ${TARGET_NAME}
-            PROPERTIES
+	$<$<STREQUAL:${GODOT_ARCH},universal>:
+		"SHELL:-arch x86_64"
+		"SHELL:-arch arm64"
+	>
+	$<$<NOT:$<STREQUAL:${GODOT_ARCH},universal>>:
+		"SHELL:-arch ${GODOT_ARCH}"
+	>
 
-            OSX_ARCHITECTURES "${OSX_ARCH}"
-    )
-
-    target_compile_definitions(${TARGET_NAME}
-            PUBLIC
-            MACOS_ENABLED
-            UNIX_ENABLED
-    )
-
-    target_link_options( ${TARGET_NAME}
-            PUBLIC
-            -Wl,-undefined,dynamic_lookup
-    )
-
-    target_link_libraries( ${TARGET_NAME}
-            INTERFACE
-            ${COCOA_LIBRARY}
-    )
-
-    common_compiler_flags()
-endfunction()
+	$<$<NOT:$<STREQUAL:${GODOT_MACOS_DEPLOYMENT_TARGET},default>>:
+		-mmacosx-version-min=${GODOT_MACOS_DEPLOYMENT_TARGET}
+	>
+)

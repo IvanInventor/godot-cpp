@@ -1,41 +1,31 @@
-#[=======================================================================[.rst:
-Web
----
+# Used with Emscripted toolchain at *toolchain_dir*/cmake/Modules/Platform/Emscripten.cmake
 
-This file contains functions for options and configuration for targeting the
-Web platform
+set(GODOT_ARCH "wasm32" CACHE STRING "Target architecture (wasm32, custom)")
 
-]=======================================================================]
-
-# Emscripten requires this hack for use of the SHARED option
-set( CMAKE_PROJECT_godot-cpp_INCLUDE cmake/emsdkHack.cmake )
-
-function( web_options )
-    # web options
-endfunction()
+string(REGEX MATCH "32$|64$" DEFAULT_GODOT_BITS "${GODOT_ARCH}")
+set(GODOT_BITS "${DEFAULT_GODOT_BITS}" CACHE STRING "Architecture bits. Needs to be set manually for custom architecture")
 
 
-function( web_generate )
-    target_compile_definitions(${TARGET_NAME}
-            PUBLIC
-            WEB_ENABLED
-            UNIX_ENABLED
-    )
+list(APPEND GODOT_DEFINITIONS
+	WEB_ENABLED
+	UNIX_ENABLED
+)
 
-    target_compile_options( ${TARGET_NAME}
-            PUBLIC
-            -sSIDE_MODULE
-            -sSUPPORT_LONGJMP=wasm
-            -fno-exceptions
-    )
+list(APPEND GODOT_C_FLAGS
+	$<$<BOOL:${GODOT_THREADS}>:
+		-sUSE_PTHREADS=1
+	>
+	-sSIDE_MODULE=1
+	-sSUPPORT_LONGJMP='wasm'
+)
 
-    target_link_options( ${TARGET_NAME}
-            INTERFACE
-            -sWASM_BIGINT
-            -sSUPPORT_LONGJMP=wasm
-            -fvisibility=hidden
-            -shared
-    )
+list(APPEND GODOT_CXX_FLAGS
+)
 
-    common_compiler_flags()
-endfunction()
+list(APPEND GODOT_LINK_FLAGS
+	$<$<BOOL:${GODOT_THREADS}>:
+		-sUSE_PTHREADS=1
+	>
+	-sSIDE_MODULE=1
+	-sSUPPORT_LONGJMP='wasm'
+)
